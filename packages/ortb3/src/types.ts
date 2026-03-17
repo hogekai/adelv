@@ -80,12 +80,27 @@ export interface Delivery<T> {
 
 // --- PluginDelivery (plugin-only API) ---
 
-export interface PluginDelivery<T> extends Delivery<T> {
+export interface PluginDelivery<T> {
+	readonly target: T;
+	readonly state: DeliveryState;
+	readonly input: DeliveryInput | null;
+
 	setState(state: DeliveryState): void;
 	emit<K extends keyof DeliveryEventMap>(
 		event: K,
 		data: DeliveryEventMap[K],
 	): void;
+
+	on<K extends keyof DeliveryEventMap>(
+		event: K,
+		handler: (data: DeliveryEventMap[K]) => void,
+	): void;
+	off<K extends keyof DeliveryEventMap>(
+		event: K,
+		handler: (data: DeliveryEventMap[K]) => void,
+	): void;
+
+	destroy(): void;
 }
 
 // --- Plugin ---

@@ -86,6 +86,24 @@ describe("createDelivery", () => {
 			expect(signal.aborted).toBe(false);
 		});
 
+		it("PluginDelivery does not expose deliver or use", () => {
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
+			delivery.use({
+				name: "test",
+				setup(d) {
+					pd = d;
+					return undefined;
+				},
+			});
+
+			expect("deliver" in pd!).toBe(false);
+			expect("use" in pd!).toBe(false);
+			expect(pd!.setState).toBeTypeOf("function");
+			expect(pd!.emit).toBeTypeOf("function");
+			expect(pd!.destroy).toBeTypeOf("function");
+		});
+
 		it("cleanup function is called on destroy", () => {
 			const delivery = createDelivery("target", { logger: makeLogger() });
 			const cleanup = vi.fn();

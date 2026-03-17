@@ -133,8 +133,6 @@ export function createDelivery<T>(
 			get input() {
 				return input;
 			},
-			use,
-			deliver,
 			on: bus.on,
 			off: bus.off,
 			destroy,
