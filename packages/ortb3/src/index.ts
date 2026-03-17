@@ -1,3 +1,4 @@
+export { createDelivery } from "./delivery.js"
 export { isValidTransition } from "./state-machine.js"
 export { TRANSITIONS } from "./types.js"
 export type {
