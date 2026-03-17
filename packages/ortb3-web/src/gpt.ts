@@ -1,13 +1,32 @@
 import type { DeliveryPlugin } from "@adelv/ortb3";
 import type { Bid } from "iab-openrtb/v30";
 
-function buildTargeting(bids: Bid[]): Record<string, string> {
+/**
+ * Build GAM targeting key-values from OpenRTB 3.0 bids.
+ *
+ * Generated keys:
+ * - `hb_pb` — Price bucket (CPM floored to 2 decimal places)
+ * - `hb_deal` — Deal ID (if present)
+ * - `hb_size` — Creative size as `WxH` (if ad has display dimensions)
+ *
+ * @param bids - Array of OpenRTB 3.0 bids. Targeting is derived from the highest-priced bid.
+ * @returns Key-value pairs for GAM slot targeting.
+ */
+export function buildTargeting(bids: Bid[]): Record<string, string> {
 	const result: Record<string, string> = {};
-	if (bids.length > 0) {
-		const topBid = bids.reduce((a, b) => (a.price > b.price ? a : b));
-		result.hb_pb = String(Math.floor(topBid.price * 100) / 100);
-		if (topBid.deal) result.hb_deal = topBid.deal;
+	if (bids.length === 0) return result;
+
+	const topBid = bids.reduce((a, b) => (a.price > b.price ? a : b));
+
+	result.hb_pb = String(Math.floor(topBid.price * 100) / 100);
+
+	if (topBid.deal) result.hb_deal = topBid.deal;
+
+	const display = topBid.media?.display;
+	if (display?.w != null && display?.h != null) {
+		result.hb_size = `${display.w}x${display.h}`;
 	}
+
 	return result;
 }
 
@@ -23,13 +42,16 @@ let servicesEnabled = false;
  *
  * @param opts.adUnit - GAM ad unit path (e.g., "/12345/header").
  * @param opts.sizes - Array of ad sizes (e.g., `[[728, 90], [970, 250]]`).
- * @param opts.bids - Optional OpenRTB 3.0 bids for targeting. Sets `hb_pb` and `hb_deal`.
+ * @param opts.bids - Optional OpenRTB 3.0 bids for targeting. Sets `hb_pb`, `hb_deal`, `hb_size`.
+ * @param opts.targeting - Optional direct key-values. Merged after auto-generated targeting (overrides on conflict).
  * @returns A `DeliveryPlugin<HTMLElement>` for GPT rendering.
  */
 export function gpt(opts: {
 	adUnit: string;
 	sizes: [number, number][];
 	bids?: Bid[];
+	/** Direct targeting key-values. Merged after auto-generated targeting from bids. */
+	targeting?: Record<string, string | string[]>;
 }): DeliveryPlugin<HTMLElement> {
 	return {
 		name: "gpt",
@@ -61,11 +83,21 @@ export function gpt(opts: {
 						servicesEnabled = true;
 					}
 
-					if (opts.bids) {
-						const targeting = buildTargeting(opts.bids);
-						for (const [key, value] of Object.entries(targeting)) {
-							slot.setTargeting(key, value);
+					const autoKv = opts.bids ? buildTargeting(opts.bids) : {};
+					const mergedKv: Record<string, string | string[]> = {
+						...autoKv,
+					};
+					if (opts.targeting) {
+						for (const [key, value] of Object.entries(opts.targeting)) {
+							mergedKv[key] = value;
 						}
+					}
+
+					for (const [key, value] of Object.entries(mergedKv)) {
+						slot.setTargeting(
+							key,
+							Array.isArray(value) ? value : [value],
+						);
 					}
 
 					listener = (e) => {

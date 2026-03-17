@@ -40,7 +40,7 @@ export function viewability(opts?: {
 							return;
 						}
 
-						const entry = entries[entries.length - 1];
+						const entry = entries[0];
 						if (!entry) return;
 
 						if (entry.isIntersecting) {

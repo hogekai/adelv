@@ -130,7 +130,7 @@ describe("gpt plugin", () => {
 		delivery.deliver({ ad: { id: "test-ad" } });
 		mockGt._flushCmd();
 
-		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("hb_pb", "2.56");
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("hb_pb", ["2.56"]);
 	});
 
 	it("calls destroySlots and removeEventListener on cleanup", () => {
@@ -214,5 +214,117 @@ describe("gpt plugin", () => {
 		mockGt._flushCmd();
 
 		expect(mockGt.defineSlot).not.toHaveBeenCalled();
+	});
+
+	it("sets hb_size from bid.media.display dimensions", () => {
+		const target = document.createElement("div");
+		target.id = "ad-slot-1";
+		const bids: Bid[] = [
+			{
+				item: "1",
+				price: 2.5,
+				media: { display: { w: 300, h: 250 } },
+			},
+		];
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(gpt({ adUnit: "/1234/unit", sizes: [[300, 250]], bids }));
+		delivery.deliver({ ad: { id: "test-ad" } });
+		mockGt._flushCmd();
+
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
+			"hb_size",
+			["300x250"],
+		);
+	});
+
+	it("does not set hb_size when bid.media is undefined", () => {
+		const target = document.createElement("div");
+		target.id = "ad-slot-1";
+		const bids: Bid[] = [{ item: "1", price: 2.5 }];
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(gpt({ adUnit: "/1234/unit", sizes: [[300, 250]], bids }));
+		delivery.deliver({ ad: { id: "test-ad" } });
+		mockGt._flushCmd();
+
+		const calls = mockGt._mockSlot.setTargeting.mock.calls;
+		const keys = calls.map((c: unknown[]) => c[0]);
+		expect(keys).not.toContain("hb_size");
+	});
+
+	it("applies direct targeting key-values", () => {
+		const target = document.createElement("div");
+		target.id = "ad-slot-1";
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(
+			gpt({
+				adUnit: "/1234/unit",
+				sizes: [[300, 250]],
+				targeting: { hb_bidder: "ssp-a" },
+			}),
+		);
+		delivery.deliver({ ad: { id: "test-ad" } });
+		mockGt._flushCmd();
+
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
+			"hb_bidder",
+			["ssp-a"],
+		);
+	});
+
+	it("direct targeting overrides auto-generated targeting", () => {
+		const target = document.createElement("div");
+		target.id = "ad-slot-1";
+		const bids: Bid[] = [{ item: "1", price: 2.5 }];
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(
+			gpt({
+				adUnit: "/1234/unit",
+				sizes: [[300, 250]],
+				bids,
+				targeting: { hb_pb: "10.00" },
+			}),
+		);
+		delivery.deliver({ ad: { id: "test-ad" } });
+		mockGt._flushCmd();
+
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
+			"hb_pb",
+			["10.00"],
+		);
+	});
+
+	it("supports array values in direct targeting", () => {
+		const target = document.createElement("div");
+		target.id = "ad-slot-1";
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(
+			gpt({
+				adUnit: "/1234/unit",
+				sizes: [[300, 250]],
+				targeting: { keywords: ["sports", "news"] },
+			}),
+		);
+		delivery.deliver({ ad: { id: "test-ad" } });
+		mockGt._flushCmd();
+
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
+			"keywords",
+			["sports", "news"],
+		);
 	});
 });

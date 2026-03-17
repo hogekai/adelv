@@ -9,7 +9,7 @@ declare namespace googletag {
 	function destroySlots(slots: Slot[]): void;
 
 	interface Slot {
-		setTargeting(key: string, value: string): Slot;
+		setTargeting(key: string, value: string | string[]): Slot;
 	}
 
 	function pubads(): PubAdsService;
