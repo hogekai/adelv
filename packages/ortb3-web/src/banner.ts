@@ -33,6 +33,16 @@ export function banner(): DeliveryPlugin<HTMLElement> {
 					delivery.setState("rendered");
 				};
 
+				iframe.onerror = () => {
+					if (signal.aborted) return;
+					delivery.emit("error", {
+						ts: Date.now(),
+						message: "iframe load failed",
+						source: "banner",
+					});
+					delivery.setState("error");
+				};
+
 				delivery.target.appendChild(iframe);
 			});
 

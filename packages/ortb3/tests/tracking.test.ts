@@ -210,6 +210,7 @@ describe("tracking", () => {
 			expect(errorHandler.mock.calls[0]![0]).toMatchObject({
 				source: "tracking",
 			});
+			expect(errorHandler.mock.calls[0]![0].message).toContain("network error");
 		});
 	});
 });

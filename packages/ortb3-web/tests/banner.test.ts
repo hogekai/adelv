@@ -120,6 +120,46 @@ describe("banner plugin", () => {
 		expect(delivery.state).toBe("error");
 	});
 
+	it("transitions to error on iframe.onerror", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(banner());
+
+		const errorHandler = vi.fn();
+		delivery.on("error", errorHandler);
+
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		iframe.onerror!(new Event("error"));
+
+		expect(delivery.state).toBe("error");
+		expect(errorHandler).toHaveBeenCalledOnce();
+		expect(errorHandler.mock.calls[0]![0]).toMatchObject({
+			message: "iframe load failed",
+			source: "banner",
+		});
+	});
+
+	it("iframe.onerror is no-op when signal is aborted", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(banner());
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		delivery.destroy();
+
+		// onerror after destroy — signal is aborted
+		expect(delivery.state).toBe("destroyed");
+	});
+
 	it("does not transition to rendering when ad.display is missing", () => {
 		const target = document.createElement("div");
 		const delivery = createDelivery(target, {

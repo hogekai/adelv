@@ -1,3 +1,4 @@
 export { banner } from "./banner.js";
+export { click } from "./click.js";
 export { viewability } from "./viewability.js";
 export { gpt } from "./gpt.js";

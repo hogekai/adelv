@@ -11,6 +11,8 @@ function buildTargeting(bids: Bid[]): Record<string, string> {
 	return result;
 }
 
+let servicesEnabled = false;
+
 export function gpt(opts: {
 	adUnit: string;
 	sizes: [number, number][];
@@ -41,7 +43,10 @@ export function gpt(opts: {
 					slot = defined;
 
 					googletag.pubads().disableInitialLoad();
-					googletag.enableServices();
+					if (!servicesEnabled) {
+						googletag.enableServices();
+						servicesEnabled = true;
+					}
 
 					if (opts.bids) {
 						const targeting = buildTargeting(opts.bids);
@@ -52,6 +57,7 @@ export function gpt(opts: {
 
 					listener = (e) => {
 						if (e.slot === slot) {
+							if (signal.aborted) return;
 							delivery.setState("rendered");
 						}
 					};

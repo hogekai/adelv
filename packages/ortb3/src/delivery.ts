@@ -44,10 +44,11 @@ export function createDelivery<T>(
 		fireBeacons(urls, sendBeacon, trackingError);
 	});
 
-	function trackingError(url: string): void {
+	function trackingError(url: string, error: unknown): void {
+		const detail = error instanceof Error ? error.message : String(error);
 		bus.emit("error", {
 			ts: Date.now(),
-			message: `Beacon failed: ${url}`,
+			message: `Beacon failed: ${url} (${detail})`,
 			source: "tracking",
 		});
 	}
@@ -72,13 +73,13 @@ export function createDelivery<T>(
 		if (newState === "rendering") {
 			timeoutId = setTimeout(() => {
 				timeoutId = null;
+				abortController.abort();
+				setState("error");
 				bus.emit("error", {
 					ts: Date.now(),
 					message: "Rendering timeout",
 					source: "timeout",
 				});
-				abortController.abort();
-				setState("error");
 			}, renderingTimeout);
 		}
 

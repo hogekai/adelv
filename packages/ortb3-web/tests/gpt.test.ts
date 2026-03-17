@@ -150,6 +150,55 @@ describe("gpt plugin", () => {
 		expect(mockGt._mockPubads.removeEventListener).toHaveBeenCalled();
 	});
 
+	it("does not transition to rendered when signal is aborted on slotRenderEnded", () => {
+		const target = document.createElement("div");
+		target.id = "ad-slot-1";
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(gpt({ adUnit: "/1234/unit", sizes: [[300, 250]] }));
+		delivery.deliver({ ad: { id: "test-ad" } });
+		mockGt._flushCmd();
+
+		expect(delivery.state).toBe("rendering");
+
+		// Destroy aborts signal, then fire slotRenderEnded
+		delivery.destroy();
+		mockGt._fireSlotRenderEnded();
+
+		expect(delivery.state).toBe("destroyed");
+	});
+
+	it("calls enableServices only once across multiple gpt instances", async () => {
+		// Reset module to clear servicesEnabled flag from prior tests
+		vi.resetModules();
+		const { gpt: freshGpt } = await import("../src/gpt.js");
+
+		const target1 = document.createElement("div");
+		target1.id = "ad-slot-1";
+		const target2 = document.createElement("div");
+		target2.id = "ad-slot-2";
+
+		const delivery1 = createDelivery(target1, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery1.use(freshGpt({ adUnit: "/1234/unit1", sizes: [[300, 250]] }));
+		delivery1.deliver({ ad: { id: "test-ad-1" } });
+		mockGt._flushCmd();
+
+		const delivery2 = createDelivery(target2, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery2.use(freshGpt({ adUnit: "/1234/unit2", sizes: [[728, 90]] }));
+		delivery2.deliver({ ad: { id: "test-ad-2" } });
+		mockGt._flushCmd();
+
+		expect(mockGt.enableServices).toHaveBeenCalledTimes(1);
+	});
+
 	it("does not define slot when signal is aborted", () => {
 		const target = document.createElement("div");
 		target.id = "ad-slot-1";

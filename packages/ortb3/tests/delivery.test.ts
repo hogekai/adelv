@@ -258,6 +258,53 @@ describe("createDelivery", () => {
 			expect(delivery.state).toBe("error");
 		});
 
+		it("error handler sees state === error on timeout", () => {
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
+			delivery.use({
+				name: "test",
+				setup(d) {
+					pd = d;
+					return undefined;
+				},
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+
+			let stateInErrorHandler: string | undefined;
+			delivery.on("error", () => {
+				stateInErrorHandler = delivery.state;
+			});
+			vi.advanceTimersByTime(5000);
+
+			expect(stateInErrorHandler).toBe("error");
+		});
+
+		it("fires statechange before error event on timeout", () => {
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
+			delivery.use({
+				name: "test",
+				setup(d) {
+					pd = d;
+					return undefined;
+				},
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+
+			const order: string[] = [];
+			delivery.on("statechange", ({ to }) => {
+				if (to === "error") order.push("statechange");
+			});
+			delivery.on("error", () => {
+				order.push("error");
+			});
+			vi.advanceTimersByTime(5000);
+
+			expect(order).toEqual(["statechange", "error"]);
+		});
+
 		it("clears timeout when rendered before expiry", () => {
 			const delivery = createDelivery("target", { logger: makeLogger() });
 			let pd: PluginDelivery<string> | undefined;
