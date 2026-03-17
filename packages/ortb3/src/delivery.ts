@@ -1,5 +1,12 @@
+import { EventType } from "iab-adcom/enum"
 import { createEventBus } from "./event-bus.js"
 import { isValidTransition } from "./state-machine.js"
+import {
+	defaultSendBeacon,
+	fireBeacons,
+	getClickTrackerUrls,
+	getEventUrls,
+} from "./tracking.js"
 import type {
 	Delivery,
 	DeliveryEventMap,
@@ -16,6 +23,7 @@ export function createDelivery<T>(
 ): Delivery<T> {
 	const logger = options?.logger ?? { warn: console.warn }
 	const renderingTimeout = options?.renderingTimeout ?? 5000
+	const sendBeacon = options?.sendBeacon ?? defaultSendBeacon
 
 	let state: DeliveryState = "idle"
 	let input: DeliveryInput | null = null
@@ -23,6 +31,26 @@ export function createDelivery<T>(
 	let timeoutId: ReturnType<typeof setTimeout> | null = null
 	const bus = createEventBus()
 	const cleanups: Array<() => void> = []
+
+	bus.on("viewable", () => {
+		if (!input) return
+		const urls = getEventUrls(input.ad, EventType.VIEWABLE_MRC_50)
+		fireBeacons(urls, sendBeacon, trackingError)
+	})
+
+	bus.on("click", () => {
+		if (!input) return
+		const urls = getClickTrackerUrls(input.ad)
+		fireBeacons(urls, sendBeacon, trackingError)
+	})
+
+	function trackingError(url: string): void {
+		bus.emit("error", {
+			ts: Date.now(),
+			message: `Beacon failed: ${url}`,
+			source: "tracking",
+		})
+	}
 
 	function clearRenderingTimeout(): void {
 		if (timeoutId !== null) {
@@ -62,8 +90,19 @@ export function createDelivery<T>(
 
 		bus.emit("statechange", { from, to: newState })
 
+		if (newState === "pending" && input?.purl) {
+			fireBeacons([input.purl], sendBeacon, trackingError)
+		}
+
 		if (newState === "rendered") {
 			bus.emit("impression", { ts: Date.now() })
+
+			if (input) {
+				const urls: string[] = []
+				if (input.burl) urls.push(input.burl)
+				urls.push(...getEventUrls(input.ad, EventType.IMPRESSION))
+				fireBeacons(urls, sendBeacon, trackingError)
+			}
 		}
 
 		if (newState === "destroyed") {

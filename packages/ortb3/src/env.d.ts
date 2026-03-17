@@ -25,3 +25,13 @@ declare function clearTimeout(
 declare const console: {
 	warn(...args: unknown[]): void
 }
+
+declare function fetch(
+	input: string,
+	init?: { method?: string; keepalive?: boolean },
+): Promise<Response>
+
+interface Response {
+	readonly ok: boolean
+	readonly status: number
+}
