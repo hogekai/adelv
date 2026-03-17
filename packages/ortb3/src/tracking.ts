@@ -1,18 +1,18 @@
-import type { Ad, Event } from "iab-adcom/media"
-import { EventTrackingMethod, EventType } from "iab-adcom/enum"
+import { EventTrackingMethod, type EventType } from "iab-adcom/enum";
+import type { Ad, Event } from "iab-adcom/media";
 
-export type BeaconSender = (url: string) => Promise<void>
+export type BeaconSender = (url: string) => Promise<void>;
 
 export const defaultSendBeacon: BeaconSender = async (url: string) => {
-	await fetch(url, { method: "GET", keepalive: true })
-}
+	await fetch(url, { method: "GET", keepalive: true });
+};
 
 /**
  * ad.display?.event からEventTypeでフィルタし、IMAGE_PIXELのURLだけ返す
  */
 export function getEventUrls(ad: Ad, type: EventType): string[] {
-	const events = ad.display?.event
-	if (!events) return []
+	const events = ad.display?.event;
+	if (!events) return [];
 	return events
 		.filter(
 			(e): e is Event & { url: string } =>
@@ -20,28 +20,28 @@ export function getEventUrls(ad: Ad, type: EventType): string[] {
 				e.method === EventTrackingMethod.IMAGE_PIXEL &&
 				typeof e.url === "string",
 		)
-		.map((e) => e.url)
+		.map((e) => e.url);
 }
 
 /**
  * Ad内のLinkAsset.trkr[]からクリックトラッカーURLを収集する
  */
 export function getClickTrackerUrls(ad: Ad): string[] {
-	const urls: string[] = []
+	const urls: string[] = [];
 	if (ad.display?.banner?.link?.trkr) {
-		urls.push(...ad.display.banner.link.trkr)
+		urls.push(...ad.display.banner.link.trkr);
 	}
 	if (ad.display?.native?.link?.trkr) {
-		urls.push(...ad.display.native.link.trkr)
+		urls.push(...ad.display.native.link.trkr);
 	}
 	if (ad.display?.native?.asset) {
 		for (const asset of ad.display.native.asset) {
 			if (asset.link?.trkr) {
-				urls.push(...asset.link.trkr)
+				urls.push(...asset.link.trkr);
 			}
 		}
 	}
-	return urls
+	return urls;
 }
 
 /**
@@ -54,6 +54,6 @@ export function fireBeacons(
 	onError: (url: string, error: unknown) => void,
 ): void {
 	for (const url of urls) {
-		sendBeacon(url).catch((error) => onError(url, error))
+		sendBeacon(url).catch((error) => onError(url, error));
 	}
 }

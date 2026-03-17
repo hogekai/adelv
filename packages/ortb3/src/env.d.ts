@@ -3,35 +3,33 @@
 // Declared minimally to keep core environment-agnostic.
 
 interface AbortSignal {
-	readonly aborted: boolean
-	readonly reason: unknown
-	addEventListener(type: "abort", listener: () => void): void
-	removeEventListener(type: "abort", listener: () => void): void
+	readonly aborted: boolean;
+	readonly reason: unknown;
+	addEventListener(type: "abort", listener: () => void): void;
+	removeEventListener(type: "abort", listener: () => void): void;
 }
 
 declare class AbortController {
-	readonly signal: AbortSignal
-	abort(reason?: unknown): void
+	readonly signal: AbortSignal;
+	abort(reason?: unknown): void;
 }
 
 declare function setTimeout(
 	callback: () => void,
 	ms?: number,
-): ReturnType<typeof globalThis.setTimeout>
-declare function clearTimeout(
-	id: ReturnType<typeof setTimeout> | null,
-): void
+): ReturnType<typeof globalThis.setTimeout>;
+declare function clearTimeout(id: ReturnType<typeof setTimeout> | null): void;
 
 declare const console: {
-	warn(...args: unknown[]): void
-}
+	warn(...args: unknown[]): void;
+};
 
 declare function fetch(
 	input: string,
 	init?: { method?: string; keepalive?: boolean },
-): Promise<Response>
+): Promise<Response>;
 
 interface Response {
-	readonly ok: boolean
-	readonly status: number
+	readonly ok: boolean;
+	readonly status: number;
 }

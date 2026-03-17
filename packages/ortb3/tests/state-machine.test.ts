@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest"
-import { isValidTransition } from "../src/state-machine.js"
-import type { DeliveryState } from "../src/types.js"
+import { describe, expect, it } from "vitest";
+import { isValidTransition } from "../src/state-machine.js";
+import type { DeliveryState } from "../src/types.js";
 
 describe("isValidTransition", () => {
 	describe("valid transitions", () => {
@@ -15,14 +15,14 @@ describe("isValidTransition", () => {
 			["rendering", "destroyed"],
 			["rendered", "destroyed"],
 			["error", "destroyed"],
-		]
+		];
 
 		for (const [from, to] of valid) {
 			it(`${from} → ${to}`, () => {
-				expect(isValidTransition(from, to)).toBe(true)
-			})
+				expect(isValidTransition(from, to)).toBe(true);
+			});
 		}
-	})
+	});
 
 	describe("invalid transitions", () => {
 		const invalid: [DeliveryState, DeliveryState][] = [
@@ -44,14 +44,14 @@ describe("isValidTransition", () => {
 			["destroyed", "rendering"],
 			["destroyed", "rendered"],
 			["destroyed", "error"],
-		]
+		];
 
 		for (const [from, to] of invalid) {
 			it(`${from} → ${to}`, () => {
-				expect(isValidTransition(from, to)).toBe(false)
-			})
+				expect(isValidTransition(from, to)).toBe(false);
+			});
 		}
-	})
+	});
 
 	describe("same-state transitions", () => {
 		const states: DeliveryState[] = [
@@ -61,12 +61,12 @@ describe("isValidTransition", () => {
 			"rendered",
 			"error",
 			"destroyed",
-		]
+		];
 
 		for (const state of states) {
 			it(`${state} → ${state}`, () => {
-				expect(isValidTransition(state, state)).toBe(false)
-			})
+				expect(isValidTransition(state, state)).toBe(false);
+			});
 		}
-	})
-})
+	});
+});

@@ -1,6 +1,6 @@
-export { createDelivery } from "./delivery.js"
-export { isValidTransition } from "./state-machine.js"
-export { TRANSITIONS } from "./types.js"
+export { createDelivery } from "./delivery.js";
+export { isValidTransition } from "./state-machine.js";
+export { TRANSITIONS } from "./types.js";
 export type {
 	DeliveryState,
 	DeliveryInput,
@@ -9,4 +9,4 @@ export type {
 	Delivery,
 	PluginDelivery,
 	DeliveryPlugin,
-} from "./types.js"
+} from "./types.js";

@@ -11,12 +11,15 @@ importers:
       '@biomejs/biome':
         specifier: ^1.9.0
         version: 1.9.4
+      happy-dom:
+        specifier: ^17.0.0
+        version: 17.6.3
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4
+        version: 3.2.4(happy-dom@17.6.3)
 
   packages/ortb3:
     dependencies:
@@ -489,6 +492,10 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  happy-dom@17.6.3:
+    resolution: {integrity: sha512-UVIHeVhxmxedbWPCfgS55Jg2rDfwf2BCKeylcPSqazLz5w3Kri7Q4xdBJubsr/+VUzFLh0VjIvh13RaDA2/Xug==}
+    engines: {node: '>=20.0.0'}
+
   iab-adcom@1.0.6:
     resolution: {integrity: sha512-XAJdidfrFgZNKmHqcXD3Zhqik2rdSmOs+PGgeVfPWgthxvzNBQxkZnKkW3QAau6mrLjtJc8yOQC6awcEv7gryA==}
     engines: {node: '>=14.0.0'}
@@ -652,6 +659,14 @@ packages:
         optional: true
       jsdom:
         optional: true
+
+  webidl-conversions@7.0.0:
+    resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
+    engines: {node: '>=12'}
+
+  whatwg-mimetype@3.0.0:
+    resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
+    engines: {node: '>=12'}
 
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
@@ -965,6 +980,11 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
+  happy-dom@17.6.3:
+    dependencies:
+      webidl-conversions: 7.0.0
+      whatwg-mimetype: 3.0.0
+
   iab-adcom@1.0.6: {}
 
   iab-openrtb@1.0.1:
@@ -1089,7 +1109,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  vitest@3.2.4:
+  vitest@3.2.4(happy-dom@17.6.3):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -1114,6 +1134,8 @@ snapshots:
       vite: 7.3.1
       vite-node: 3.2.4
       why-is-node-running: 2.3.0
+    optionalDependencies:
+      happy-dom: 17.6.3
     transitivePeerDependencies:
       - jiti
       - less
@@ -1127,6 +1149,10 @@ snapshots:
       - terser
       - tsx
       - yaml
+
+  webidl-conversions@7.0.0: {}
+
+  whatwg-mimetype@3.0.0: {}
 
   why-is-node-running@2.3.0:
     dependencies:

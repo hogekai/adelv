@@ -1,23 +1,23 @@
 {
-  "name": "@adelv/ortb3-web",
-  "version": "0.0.0",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": ["dist"],
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@adelv/ortb3": "workspace:*",
-    "iab-adcom": "^1.0.0"
-  },
-  "devDependencies": {
-    "iab-openrtb": "^1.0.0"
-  }
+	"name": "@adelv/ortb3-web",
+	"version": "0.0.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@adelv/ortb3": "workspace:*",
+		"iab-adcom": "^1.0.0"
+	},
+	"devDependencies": {
+		"iab-openrtb": "^1.0.0"
+	}
 }

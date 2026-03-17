@@ -1,444 +1,444 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { createDelivery } from "../src/delivery.js"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createDelivery } from "../src/delivery.js";
 import type {
-	DeliveryPlugin,
 	DeliveryInput,
+	DeliveryPlugin,
 	PluginDelivery,
-} from "../src/types.js"
+} from "../src/types.js";
 
-const mockAd = {} as DeliveryInput["ad"]
+const mockAd = {} as DeliveryInput["ad"];
 
 function makeInput(overrides?: Partial<DeliveryInput>): DeliveryInput {
-	return { ad: mockAd, ...overrides }
+	return { ad: mockAd, ...overrides };
 }
 
 function makeLogger() {
-	return { warn: vi.fn() }
+	return { warn: vi.fn() };
 }
 
 describe("createDelivery", () => {
 	describe("initial state", () => {
 		it("starts in idle with null input", () => {
-			const target = { id: "slot-1" }
-			const delivery = createDelivery(target, { logger: makeLogger() })
+			const target = { id: "slot-1" };
+			const delivery = createDelivery(target, { logger: makeLogger() });
 
-			expect(delivery.state).toBe("idle")
-			expect(delivery.input).toBe(null)
-			expect(delivery.target).toBe(target)
-		})
-	})
+			expect(delivery.state).toBe("idle");
+			expect(delivery.input).toBe(null);
+			expect(delivery.target).toBe(target);
+		});
+	});
 
 	describe("deliver()", () => {
 		it("transitions to pending and sets input", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			const input = makeInput()
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			const input = makeInput();
 
-			delivery.deliver(input)
+			delivery.deliver(input);
 
-			expect(delivery.state).toBe("pending")
-			expect(delivery.input).toBe(input)
-		})
+			expect(delivery.state).toBe("pending");
+			expect(delivery.input).toBe(input);
+		});
 
 		it("throws when called in pending state", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			delivery.deliver(makeInput())
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			delivery.deliver(makeInput());
 
-			expect(() => delivery.deliver(makeInput())).toThrow()
-		})
+			expect(() => delivery.deliver(makeInput())).toThrow();
+		});
 
 		it("throws when called in rendered state", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
-			pd!.setState("rendered")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+			pd!.setState("rendered");
 
-			expect(() => delivery.deliver(makeInput())).toThrow()
-		})
+			expect(() => delivery.deliver(makeInput())).toThrow();
+		});
 
 		it("throws when called in destroyed state", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			delivery.destroy()
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			delivery.destroy();
 
-			expect(() => delivery.deliver(makeInput())).toThrow()
-		})
-	})
+			expect(() => delivery.deliver(makeInput())).toThrow();
+		});
+	});
 
 	describe("use()", () => {
 		it("calls plugin setup with PluginDelivery and AbortSignal", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			const setup = vi.fn(() => undefined)
-			const plugin: DeliveryPlugin<string> = { name: "test", setup }
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			const setup = vi.fn(() => undefined);
+			const plugin: DeliveryPlugin<string> = { name: "test", setup };
 
-			delivery.use(plugin)
+			delivery.use(plugin);
 
-			expect(setup).toHaveBeenCalledOnce()
-			const [pd, signal] = setup.mock.calls[0]!
-			expect(pd.setState).toBeTypeOf("function")
-			expect(pd.emit).toBeTypeOf("function")
-			expect(signal.aborted).toBe(false)
-		})
+			expect(setup).toHaveBeenCalledOnce();
+			const [pd, signal] = setup.mock.calls[0]!;
+			expect(pd.setState).toBeTypeOf("function");
+			expect(pd.emit).toBeTypeOf("function");
+			expect(signal.aborted).toBe(false);
+		});
 
 		it("cleanup function is called on destroy", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			const cleanup = vi.fn()
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			const cleanup = vi.fn();
 			delivery.use({
 				name: "test",
 				setup() {
-					return cleanup
+					return cleanup;
 				},
-			})
+			});
 
-			delivery.destroy()
+			delivery.destroy();
 
-			expect(cleanup).toHaveBeenCalledOnce()
-		})
-	})
+			expect(cleanup).toHaveBeenCalledOnce();
+		});
+	});
 
 	describe("setState (via plugin)", () => {
 		it("fires statechange event on valid transition", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
+			});
+			delivery.deliver(makeInput());
 
-			const handler = vi.fn()
-			delivery.on("statechange", handler)
-			pd!.setState("rendering")
+			const handler = vi.fn();
+			delivery.on("statechange", handler);
+			pd!.setState("rendering");
 
 			expect(handler).toHaveBeenCalledWith({
 				from: "pending",
 				to: "rendering",
-			})
-		})
+			});
+		});
 
 		it("invalid transition logs warn and does not change state", () => {
-			const logger = makeLogger()
-			const delivery = createDelivery("target", { logger })
+			const logger = makeLogger();
+			const delivery = createDelivery("target", { logger });
 
-			let pd: PluginDelivery<string> | undefined
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
+			});
 
-			pd!.setState("rendered") // idle → rendered is invalid
+			pd!.setState("rendered"); // idle → rendered is invalid
 
-			expect(logger.warn).toHaveBeenCalledOnce()
-			expect(delivery.state).toBe("idle")
-		})
+			expect(logger.warn).toHaveBeenCalledOnce();
+			expect(delivery.state).toBe("idle");
+		});
 
 		it("same-state transition is no-op (no event, no warn)", () => {
-			const logger = makeLogger()
-			const delivery = createDelivery("target", { logger })
-			let pd: PluginDelivery<string> | undefined
+			const logger = makeLogger();
+			const delivery = createDelivery("target", { logger });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
+			});
+			delivery.deliver(makeInput());
 
-			const handler = vi.fn()
-			delivery.on("statechange", handler)
-			pd!.setState("pending") // already pending
+			const handler = vi.fn();
+			delivery.on("statechange", handler);
+			pd!.setState("pending"); // already pending
 
-			expect(handler).not.toHaveBeenCalled()
-			expect(logger.warn).not.toHaveBeenCalled()
-		})
-	})
+			expect(handler).not.toHaveBeenCalled();
+			expect(logger.warn).not.toHaveBeenCalled();
+		});
+	});
 
 	describe("rendering timeout", () => {
 		beforeEach(() => {
-			vi.useFakeTimers()
-		})
+			vi.useFakeTimers();
+		});
 		afterEach(() => {
-			vi.useRealTimers()
-		})
+			vi.useRealTimers();
+		});
 
 		it("auto-transitions to error after default 5000ms", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
 
-			vi.advanceTimersByTime(5000)
+			vi.advanceTimersByTime(5000);
 
-			expect(delivery.state).toBe("error")
-		})
+			expect(delivery.state).toBe("error");
+		});
 
 		it("fires error event with source timeout", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
 
-			const handler = vi.fn()
-			delivery.on("error", handler)
-			vi.advanceTimersByTime(5000)
+			const handler = vi.fn();
+			delivery.on("error", handler);
+			vi.advanceTimersByTime(5000);
 
-			expect(handler).toHaveBeenCalledOnce()
+			expect(handler).toHaveBeenCalledOnce();
 			expect(handler.mock.calls[0]![0]).toMatchObject({
 				source: "timeout",
-			})
-		})
+			});
+		});
 
 		it("aborts signal on timeout", () => {
-			let signal: AbortSignal | undefined
-			let pd: PluginDelivery<string> | undefined
-			const delivery = createDelivery("target", { logger: makeLogger() })
+			let signal: AbortSignal | undefined;
+			let pd: PluginDelivery<string> | undefined;
+			const delivery = createDelivery("target", { logger: makeLogger() });
 			delivery.use({
 				name: "test",
 				setup(d, s) {
-					signal = s
-					pd = d
-					return undefined
+					signal = s;
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
 
-			vi.advanceTimersByTime(5000)
+			vi.advanceTimersByTime(5000);
 
-			expect(signal!.aborted).toBe(true)
-		})
+			expect(signal!.aborted).toBe(true);
+		});
 
 		it("respects custom renderingTimeout", () => {
 			const delivery = createDelivery("target", {
 				logger: makeLogger(),
 				renderingTimeout: 1000,
-			})
-			let pd: PluginDelivery<string> | undefined
+			});
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
 
-			vi.advanceTimersByTime(999)
-			expect(delivery.state).toBe("rendering")
+			vi.advanceTimersByTime(999);
+			expect(delivery.state).toBe("rendering");
 
-			vi.advanceTimersByTime(1)
-			expect(delivery.state).toBe("error")
-		})
+			vi.advanceTimersByTime(1);
+			expect(delivery.state).toBe("error");
+		});
 
 		it("clears timeout when rendered before expiry", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
-			pd!.setState("rendered")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+			pd!.setState("rendered");
 
-			vi.advanceTimersByTime(10000)
+			vi.advanceTimersByTime(10000);
 
-			expect(delivery.state).toBe("rendered")
-		})
-	})
+			expect(delivery.state).toBe("rendered");
+		});
+	});
 
 	describe("rendered triggers impression", () => {
 		it("emits impression event on rendered transition", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
 
-			const handler = vi.fn()
-			delivery.on("impression", handler)
-			pd!.setState("rendered")
+			const handler = vi.fn();
+			delivery.on("impression", handler);
+			pd!.setState("rendered");
 
-			expect(handler).toHaveBeenCalledOnce()
-			expect(handler.mock.calls[0]![0].ts).toBeTypeOf("number")
-		})
-	})
+			expect(handler).toHaveBeenCalledOnce();
+			expect(handler.mock.calls[0]![0].ts).toBeTypeOf("number");
+		});
+	});
 
 	describe("destroy()", () => {
 		it("transitions to destroyed", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			delivery.destroy()
-			expect(delivery.state).toBe("destroyed")
-		})
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			delivery.destroy();
+			expect(delivery.state).toBe("destroyed");
+		});
 
 		it("calls all plugin cleanup functions", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			const c1 = vi.fn()
-			const c2 = vi.fn()
-			delivery.use({ name: "p1", setup: () => c1 })
-			delivery.use({ name: "p2", setup: () => c2 })
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			const c1 = vi.fn();
+			const c2 = vi.fn();
+			delivery.use({ name: "p1", setup: () => c1 });
+			delivery.use({ name: "p2", setup: () => c2 });
 
-			delivery.destroy()
+			delivery.destroy();
 
-			expect(c1).toHaveBeenCalledOnce()
-			expect(c2).toHaveBeenCalledOnce()
-		})
+			expect(c1).toHaveBeenCalledOnce();
+			expect(c2).toHaveBeenCalledOnce();
+		});
 
 		it("emits destroy event", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			const handler = vi.fn()
-			delivery.on("destroy", handler)
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			const handler = vi.fn();
+			delivery.on("destroy", handler);
 
-			delivery.destroy()
+			delivery.destroy();
 
-			expect(handler).toHaveBeenCalledOnce()
-		})
+			expect(handler).toHaveBeenCalledOnce();
+		});
 
 		it("clears rendering timeout", () => {
-			vi.useFakeTimers()
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			vi.useFakeTimers();
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
-			delivery.destroy()
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+			delivery.destroy();
 
-			vi.advanceTimersByTime(10000)
-			expect(delivery.state).toBe("destroyed")
-			vi.useRealTimers()
-		})
+			vi.advanceTimersByTime(10000);
+			expect(delivery.state).toBe("destroyed");
+			vi.useRealTimers();
+		});
 
 		it("aborts signal", () => {
-			let signal: AbortSignal | undefined
-			const delivery = createDelivery("target", { logger: makeLogger() })
+			let signal: AbortSignal | undefined;
+			const delivery = createDelivery("target", { logger: makeLogger() });
 			delivery.use({
 				name: "test",
 				setup(_d, s) {
-					signal = s
-					return undefined
+					signal = s;
+					return undefined;
 				},
-			})
+			});
 
-			delivery.destroy()
+			delivery.destroy();
 
-			expect(signal!.aborted).toBe(true)
-		})
-	})
+			expect(signal!.aborted).toBe(true);
+		});
+	});
 
 	describe("viewable dedup (integration)", () => {
 		it("viewable handler fires only once", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
-			pd!.setState("rendered")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+			pd!.setState("rendered");
 
-			const handler = vi.fn()
-			delivery.on("viewable", handler)
-			pd!.emit("viewable", { ts: 1 })
-			pd!.emit("viewable", { ts: 2 })
+			const handler = vi.fn();
+			delivery.on("viewable", handler);
+			pd!.emit("viewable", { ts: 1 });
+			pd!.emit("viewable", { ts: 2 });
 
-			expect(handler).toHaveBeenCalledOnce()
-		})
-	})
+			expect(handler).toHaveBeenCalledOnce();
+		});
+	});
 
 	describe("click multiple times", () => {
 		it("click handler fires every time", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
-			pd!.setState("rendered")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+			pd!.setState("rendered");
 
-			const handler = vi.fn()
-			delivery.on("click", handler)
-			pd!.emit("click", { ts: 1, url: "https://example.com" })
-			pd!.emit("click", { ts: 2, url: "https://example.com" })
-			pd!.emit("click", { ts: 3, url: "https://example.com" })
+			const handler = vi.fn();
+			delivery.on("click", handler);
+			pd!.emit("click", { ts: 1, url: "https://example.com" });
+			pd!.emit("click", { ts: 2, url: "https://example.com" });
+			pd!.emit("click", { ts: 3, url: "https://example.com" });
 
-			expect(handler).toHaveBeenCalledTimes(3)
-		})
-	})
+			expect(handler).toHaveBeenCalledTimes(3);
+		});
+	});
 
 	describe("emit after destroy", () => {
 		it("plugin emit is suppressed after destroy", () => {
-			const delivery = createDelivery("target", { logger: makeLogger() })
-			let pd: PluginDelivery<string> | undefined
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
 				name: "test",
 				setup(d) {
-					pd = d
-					return undefined
+					pd = d;
+					return undefined;
 				},
-			})
-			delivery.deliver(makeInput())
-			pd!.setState("rendering")
-			pd!.setState("rendered")
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+			pd!.setState("rendered");
 
-			const handler = vi.fn()
-			delivery.on("viewable", handler)
+			const handler = vi.fn();
+			delivery.on("viewable", handler);
 
-			delivery.destroy()
-			pd!.emit("viewable", { ts: 1 })
+			delivery.destroy();
+			pd!.emit("viewable", { ts: 1 });
 
-			expect(handler).not.toHaveBeenCalled()
-		})
-	})
-})
+			expect(handler).not.toHaveBeenCalled();
+		});
+	});
+});
