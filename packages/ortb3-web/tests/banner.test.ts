@@ -173,4 +173,97 @@ describe("banner plugin", () => {
 
 		expect(delivery.state).toBe("pending");
 	});
+
+	it("default sandbox has allow-scripts, allow-popups, allow-popups-to-escape-sandbox", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(banner());
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		expect(iframe.sandbox.contains("allow-scripts")).toBe(true);
+		expect(iframe.sandbox.contains("allow-popups")).toBe(true);
+		expect(iframe.sandbox.contains("allow-popups-to-escape-sandbox")).toBe(
+			true,
+		);
+	});
+
+	it("applies custom sandbox tokens", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(
+			banner({ sandbox: ["allow-scripts", "allow-same-origin"] }),
+		);
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		expect(iframe.sandbox.contains("allow-scripts")).toBe(true);
+		expect(iframe.sandbox.contains("allow-same-origin")).toBe(true);
+		expect(iframe.sandbox.contains("allow-popups")).toBe(false);
+	});
+
+	it("removes sandbox attribute when null", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(banner({ sandbox: null }));
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		expect(iframe.hasAttribute("sandbox")).toBe(false);
+	});
+
+	it("applies custom style merged with defaults", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(banner({ style: { width: "100%", height: "auto" } }));
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		expect(iframe.style.borderStyle).toBe("none");
+		expect(iframe.style.width).toBe("100%");
+		expect(iframe.style.height).toBe("auto");
+	});
+
+	it("custom style overrides defaults", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(banner({ style: { border: "1px solid red" } }));
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		expect(iframe.style.border).toBe("1px solid red");
+	});
+
+	it("applies custom attributes", () => {
+		const target = document.createElement("div");
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		delivery.use(
+			banner({
+				attrs: { loading: "lazy", referrerpolicy: "no-referrer" },
+			}),
+		);
+		delivery.deliver(makeAdInput());
+
+		const iframe = target.querySelector("iframe")!;
+		expect(iframe.getAttribute("loading")).toBe("lazy");
+		expect(iframe.getAttribute("referrerpolicy")).toBe("no-referrer");
+	});
 });

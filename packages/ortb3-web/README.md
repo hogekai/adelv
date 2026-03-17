@@ -10,7 +10,7 @@ npm install @adelv/ortb3 @adelv/ortb3-web
 
 ## Plugins
 
-### `banner()`
+### `banner(opts?)`
 
 Renders display ads via sandboxed iframe. Reads `ad.display.adm` markup.
 
@@ -18,10 +18,33 @@ Renders display ads via sandboxed iframe. Reads `ad.display.adm` markup.
 import { createDelivery } from "@adelv/ortb3"
 import { banner } from "@adelv/ortb3-web"
 
+// Default usage
 const delivery = createDelivery(document.getElementById("ad-slot")!)
 delivery.use(banner())
 delivery.deliver({ ad, purl, burl })
+
+// With allow-same-origin for postMessage-based creatives
+delivery.use(banner({
+  sandbox: ["allow-scripts", "allow-same-origin", "allow-popups"],
+}))
+
+// Custom iframe attributes and style
+delivery.use(banner({
+  attrs: { loading: "lazy" },
+  style: { width: "100%", height: "auto" },
+}))
+
+// Remove sandbox entirely (not recommended)
+delivery.use(banner({ sandbox: null }))
 ```
+
+Options:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `sandbox` | `string[] \| null` | `["allow-scripts", "allow-popups", "allow-popups-to-escape-sandbox"]` | iframe sandbox tokens. `null` removes sandbox. |
+| `attrs` | `Record<string, string>` | — | Additional iframe attributes. |
+| `style` | `Partial<CSSStyleDeclaration>` | `{ border: "none" }` | CSS styles. Merged with defaults. |
 
 - `pending` → reads `ad.display.adm` → creates iframe with `srcdoc`
 - `iframe.onload` → transitions to `rendered`
