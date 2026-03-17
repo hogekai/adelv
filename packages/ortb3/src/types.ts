@@ -1,7 +1,13 @@
 import type { Ad } from "iab-adcom/media";
 
-// --- State ---
-
+/**
+ * Delivery states.
+ *
+ * ```
+ * idle → pending → rendering → rendered → destroyed
+ *                             → error    → destroyed
+ * ```
+ */
 export type DeliveryState =
 	| "idle"
 	| "pending"
@@ -10,8 +16,7 @@ export type DeliveryState =
 	| "error"
 	| "destroyed";
 
-// --- Transitions whitelist ---
-
+/** State machine transition whitelist. */
 export const TRANSITIONS: Record<DeliveryState, readonly DeliveryState[]> = {
 	idle: ["pending", "destroyed"],
 	pending: ["rendering", "error", "destroyed"],
@@ -21,32 +26,45 @@ export const TRANSITIONS: Record<DeliveryState, readonly DeliveryState[]> = {
 	destroyed: [],
 };
 
-// --- Input ---
-
+/**
+ * Input for ad delivery. Passed to `Delivery.deliver()`.
+ *
+ * `ad` is the AdCOM Ad object containing creative and event trackers.
+ * `purl` and `burl` are Transaction Layer notification URLs.
+ */
 export interface DeliveryInput {
-	/** AdCOM Ad object */
+	/** AdCOM Ad object. */
 	ad: Ad;
-	/** Pending notification URL（Transaction Layerから） */
+	/** Pending notification URL (from Transaction Layer). */
 	purl?: string;
-	/** Billing notification URL（Transaction Layerから。rendered遷移で発火） */
+	/** Billing notification URL (from Transaction Layer). Fired on `rendered` transition. */
 	burl?: string;
 }
 
-// --- Options ---
-
+/**
+ * Options for `createDelivery()`.
+ */
 export interface DeliveryOptions {
-	/** rendering → error の自動遷移タイムアウト（ms）。デフォルト 5000 */
+	/** Timeout in ms for automatic `rendering` → `error` transition. Default: `5000`. */
 	renderingTimeout?: number;
-	/** デバッグ用logger。デフォルトはconsole.warn */
+	/** Debug logger. Default: `console.warn`. */
 	logger?: {
 		warn(message: string): void;
 	};
-	/** beacon発火関数。デフォルトは fetch GET */
+	/** Beacon sender function. Default: fetch GET with `keepalive: true`. */
 	sendBeacon?: (url: string) => Promise<void>;
 }
 
-// --- Events ---
-
+/**
+ * Event map for delivery lifecycle events.
+ *
+ * - `statechange` — Fired on every state transition.
+ * - `impression` — Fired once when entering `rendered`.
+ * - `viewable` — Fired by plugins. Core deduplicates (fires trackers once).
+ * - `click` — Fired by plugins. Every emission fires click trackers.
+ * - `error` — Rendering errors, tracking failures, timeouts.
+ * - `destroy` — Fired when delivery is destroyed.
+ */
 export interface DeliveryEventMap {
 	statechange: { from: DeliveryState; to: DeliveryState };
 	impression: { ts: number };
@@ -56,8 +74,11 @@ export interface DeliveryEventMap {
 	destroy: undefined;
 }
 
-// --- Delivery (public API) ---
-
+/**
+ * Public API for a delivery instance. One per ad slot.
+ *
+ * @typeParam T - The delivery target type (e.g., `HTMLElement`).
+ */
 export interface Delivery<T> {
 	readonly target: T;
 	readonly state: DeliveryState;
@@ -78,8 +99,14 @@ export interface Delivery<T> {
 	destroy(): void;
 }
 
-// --- PluginDelivery (plugin-only API) ---
-
+/**
+ * Extended API available to plugins inside `setup()`.
+ * Exposes `setState` and `emit` for driving the delivery lifecycle.
+ *
+ * Does not expose `deliver()` or `use()` — those are public-only.
+ *
+ * @typeParam T - The delivery target type.
+ */
 export interface PluginDelivery<T> {
 	readonly target: T;
 	readonly state: DeliveryState;
@@ -103,8 +130,12 @@ export interface PluginDelivery<T> {
 	destroy(): void;
 }
 
-// --- Plugin ---
-
+/**
+ * Plugin interface. Plugins are trusted code with full lifecycle access.
+ *
+ * @typeParam T - The delivery target type the plugin operates on.
+ *   A `DeliveryPlugin<HTMLElement>` cannot be used with `Delivery<Manifest>`.
+ */
 export interface DeliveryPlugin<T> {
 	name: string;
 	setup(

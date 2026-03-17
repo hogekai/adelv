@@ -1,5 +1,13 @@
 import type { DeliveryPlugin } from "@adelv/ortb3";
 
+/**
+ * Banner display ad renderer. Creates a sandboxed iframe with `ad.display.adm` markup.
+ *
+ * Transitions: `pending` → `rendering` → `rendered` (on iframe load) or `error`.
+ * Skips if `ad.display` is not present (not a display ad).
+ *
+ * @returns A `DeliveryPlugin<HTMLElement>` for display ad rendering.
+ */
 export function banner(): DeliveryPlugin<HTMLElement> {
 	return {
 		name: "banner",

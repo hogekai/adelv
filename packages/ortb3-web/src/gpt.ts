@@ -13,6 +13,19 @@ function buildTargeting(bids: Bid[]): Record<string, string> {
 
 let servicesEnabled = false;
 
+/**
+ * Google Publisher Tag integration plugin.
+ *
+ * Defines a GPT slot, sets header bidding targeting from bid data,
+ * and renders via `googletag.pubads().refresh()`.
+ *
+ * `enableServices()` is called once globally across all GPT plugin instances.
+ *
+ * @param opts.adUnit - GAM ad unit path (e.g., "/12345/header").
+ * @param opts.sizes - Array of ad sizes (e.g., `[[728, 90], [970, 250]]`).
+ * @param opts.bids - Optional OpenRTB 3.0 bids for targeting. Sets `hb_pb` and `hb_deal`.
+ * @returns A `DeliveryPlugin<HTMLElement>` for GPT rendering.
+ */
 export function gpt(opts: {
 	adUnit: string;
 	sizes: [number, number][];

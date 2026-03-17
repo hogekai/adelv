@@ -7,6 +7,17 @@ function getLandingUrl(ad: Ad): string | undefined {
 	return undefined;
 }
 
+/**
+ * Click detection plugin. Detects clicks on the target element and iframe focus events.
+ *
+ * - Direct clicks: `click` event listener on the target element (for native ads).
+ * - Iframe clicks: `window.blur` + `document.activeElement` heuristic (best effort).
+ *
+ * Landing URL is extracted from `ad.display.banner.link.url` or `ad.display.native.link.url`.
+ * Starts detecting after `rendered`.
+ *
+ * @returns A `DeliveryPlugin<HTMLElement>` for click detection.
+ */
 export function click(): DeliveryPlugin<HTMLElement> {
 	return {
 		name: "click",

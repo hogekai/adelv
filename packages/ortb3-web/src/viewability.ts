@@ -1,5 +1,15 @@
 import type { DeliveryPlugin } from "@adelv/ortb3";
 
+/**
+ * MRC viewability measurement plugin using IntersectionObserver.
+ *
+ * Starts observing after `rendered`. Emits `viewable` when the target is
+ * at least `threshold` visible for `duration` milliseconds continuously.
+ *
+ * @param opts.threshold - Intersection ratio required. Default: `0.5` (50%).
+ * @param opts.duration - Continuous visibility time in ms. Default: `1000` (MRC standard).
+ * @returns A `DeliveryPlugin<HTMLElement>` for viewability measurement.
+ */
 export function viewability(opts?: {
 	threshold?: number;
 	duration?: number;

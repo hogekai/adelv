@@ -17,6 +17,22 @@ import type {
 	PluginDelivery,
 } from "./types.js";
 
+/**
+ * Create a delivery instance for a single ad slot.
+ *
+ * @typeParam T - The delivery target type. Determines which plugins are compatible.
+ * @param target - The delivery target (e.g., an HTMLElement for web delivery).
+ * @param options - Configuration for timeout, logging, and beacon delivery.
+ * @returns A `Delivery<T>` instance in `idle` state.
+ *
+ * @example
+ * ```typescript
+ * const delivery = createDelivery(document.getElementById("ad-slot")!)
+ * delivery.use(banner())
+ * delivery.use(viewability())
+ * delivery.deliver({ ad: bid.media, purl: bid.purl, burl: bid.burl })
+ * ```
+ */
 export function createDelivery<T>(
 	target: T,
 	options?: DeliveryOptions,
