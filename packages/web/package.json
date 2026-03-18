@@ -1,6 +1,6 @@
 {
 	"name": "@adelv/web",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"type": "module",
 	"license": "MIT",
 	"exports": {
@@ -9,7 +9,10 @@
 			"import": "./dist/index.js"
 		}
 	},
-	"files": ["dist", "LICENSE"],
+	"files": [
+		"dist",
+		"LICENSE"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc --noEmit"
