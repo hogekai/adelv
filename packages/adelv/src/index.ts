@@ -1,3 +1,4 @@
+export { withConsent } from "./consent.js";
 export { createDelivery } from "./delivery.js";
 export { isValidTransition } from "./state-machine.js";
 export { defaultSendBeacon } from "./tracking.js";

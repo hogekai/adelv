@@ -80,6 +80,39 @@ const sendBeacon: BeaconSender = async (url) => {
 const delivery = createDelivery(element, { sendBeacon })
 ```
 
+## Consent
+
+Wrap the beacon sender with consent checking:
+
+```typescript
+import { createDelivery, withConsent } from "@adelv/adelv"
+
+const delivery = createDelivery(element, {
+  sendBeacon: withConsent(() => {
+    // Return true if consent is granted
+    return window.__tcfapiConsentGranted === true
+  }),
+})
+```
+
+When consent is denied:
+- Beacons are not fired
+- An `error` event with `source: "tracking"` is emitted
+- State transitions are unaffected (ads still render)
+
+Combine with a custom sender:
+
+```typescript
+import { withConsent } from "@adelv/adelv"
+
+const sender = withConsent(
+  () => hasConsent(),
+  async (url) => navigator.sendBeacon(url),
+)
+
+const delivery = createDelivery(element, { sendBeacon: sender })
+```
+
 ## Custom Plugins
 
 ```typescript

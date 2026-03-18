@@ -227,6 +227,10 @@ interface DeliveryPlugin<T> {
 }
 ```
 
+### `withConsent(getConsent, sender?): BeaconSender`
+
+Wrap a beacon sender with consent checking. When `getConsent()` returns `false`, beacons are suppressed and an error event is emitted.
+
 ### Web Plugins
 
 | Plugin | Description |
