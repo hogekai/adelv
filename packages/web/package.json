@@ -9,10 +9,7 @@
 			"import": "./dist/index.js"
 		}
 	},
-	"files": [
-		"dist",
-		"LICENSE"
-	],
+	"files": ["dist", "LICENSE"],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc --noEmit"
