@@ -232,6 +232,7 @@ interface DeliveryPlugin<T> {
 | Plugin | Description |
 |---|---|
 | `banner()` | Renders display ads via iframe. `DeliveryPlugin<HTMLElement>` |
+| `native(opts)` | Native ad structured rendering via user render function. |
 | `viewability(opts?)` | MRC viewability measurement. threshold (default 0.5), duration (default 1000ms) |
 | `click()` | Click detection for target elements and iframe focus. |
 | `gpt(opts)` | Google Publisher Tag integration. See [@adelv/gpt](./packages/gpt). |

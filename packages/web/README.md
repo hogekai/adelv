@@ -1,6 +1,6 @@
 # @adelv/web
 
-Web plugins for [@adelv/adelv](https://www.npmjs.com/package/@adelv/adelv). Banner rendering, MRC viewability, and click detection.
+Web plugins for [@adelv/adelv](https://www.npmjs.com/package/@adelv/adelv). Banner rendering, native ad rendering, MRC viewability, and click detection.
 
 See [@adelv/gpt](https://www.npmjs.com/package/@adelv/gpt) for Google Publisher Tag integration.
 
@@ -73,6 +73,43 @@ delivery.use(viewability({
 - Emits `viewable` event once threshold is met for duration
 - Core deduplicates: trackers fire once regardless of multiple emits
 
+### `native(opts)`
+
+Native ad renderer. Delegates DOM construction to a user-provided render function.
+
+```typescript
+import { native } from "@adelv/web"
+import { NativeDataAssetType } from "iab-adcom/enum"
+
+delivery.use(native({
+  render(target, ad) {
+    const assets = ad.display!.native!.asset ?? []
+    const link = ad.display!.native!.link
+
+    const title = assets.find(a => a.title)?.title?.text ?? ""
+    const img = assets.find(a => a.image)?.image?.url ?? ""
+    const desc = assets.find(a => a.data?.type === NativeDataAssetType.DESCRIPTION)?.data?.value ?? ""
+    const sponsor = assets.find(a => a.data?.type === NativeDataAssetType.SPONSORED)?.data?.value ?? ""
+
+    target.innerHTML = `
+      <a href="${link?.url ?? "#"}" class="native-ad">
+        <img src="${img}" alt="${title}" />
+        <h3>${title}</h3>
+        <p>${desc}</p>
+        <span class="sponsor">${sponsor}</span>
+      </a>
+    `
+
+    return () => { target.innerHTML = "" }
+  },
+}))
+```
+
+- Skips if `ad.display?.native` is not present
+- `render` function receives `(target: HTMLElement, ad: Ad)`
+- Optionally return a cleanup function. Default cleanup: `target.innerHTML = ""`
+- Errors in `render` transition to `error` state
+
 ### `click()`
 
 Click detection for target elements and iframe focus.
@@ -98,7 +135,7 @@ delivery.use(viewability())  // measurement plugin
 delivery.use(click())        // measurement plugin
 ```
 
-Only one rendering plugin per delivery (`banner()` or `gpt()`). Multiple measurement plugins are fine.
+Only one rendering plugin per delivery (`banner()`, `native()`, or `gpt()`). Multiple measurement plugins are fine.
 
 ## License
 
