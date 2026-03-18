@@ -22,12 +22,14 @@ If any step fails after attempting fixes, report the error and stop.
 
 ## 3. Version packages
 
-Run `pnpm version` (which runs `changeset version`).
+Run `pnpm changeset version`.
 
 This will:
 - Bump versions in package.json files based on changesets
 - Update CHANGELOG.md in each affected package
 - Remove consumed changeset files
+
+Then run `pnpm lint:fix` to fix any formatting changes introduced by changeset.
 
 Review the changes:
 ```bash
