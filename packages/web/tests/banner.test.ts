@@ -197,9 +197,7 @@ describe("banner plugin", () => {
 			logger: makeLogger(),
 			sendBeacon: makeSendBeacon(),
 		});
-		delivery.use(
-			banner({ sandbox: ["allow-scripts", "allow-same-origin"] }),
-		);
+		delivery.use(banner({ sandbox: ["allow-scripts", "allow-same-origin"] }));
 		delivery.deliver(makeAdInput());
 
 		const iframe = target.querySelector("iframe")!;

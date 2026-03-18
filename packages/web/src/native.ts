@@ -15,7 +15,7 @@ export interface NativeOptions {
 	 * @param target - The HTMLElement to render into.
 	 * @param ad - The AdCOM Ad object. Access `ad.display.native.asset` for structured assets.
 	 */
-	render: (target: HTMLElement, ad: Ad) => (() => void) | void;
+	render: (target: HTMLElement, ad: Ad) => (() => void) | undefined;
 }
 
 /**

@@ -130,7 +130,9 @@ describe("gpt plugin", () => {
 		delivery.deliver({ ad: { id: "test-ad" } });
 		mockGt._flushCmd();
 
-		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("hb_pb", ["2.56"]);
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("hb_pb", [
+			"2.56",
+		]);
 	});
 
 	it("calls destroySlots and removeEventListener on cleanup", () => {
@@ -234,10 +236,9 @@ describe("gpt plugin", () => {
 		delivery.deliver({ ad: { id: "test-ad" } });
 		mockGt._flushCmd();
 
-		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
-			"hb_size",
-			["300x250"],
-		);
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("hb_size", [
+			"300x250",
+		]);
 	});
 
 	it("does not set hb_size when bid.media is undefined", () => {
@@ -274,10 +275,9 @@ describe("gpt plugin", () => {
 		delivery.deliver({ ad: { id: "test-ad" } });
 		mockGt._flushCmd();
 
-		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
-			"hb_bidder",
-			["ssp-a"],
-		);
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("hb_bidder", [
+			"ssp-a",
+		]);
 	});
 
 	it("direct targeting overrides auto-generated targeting", () => {
@@ -299,10 +299,9 @@ describe("gpt plugin", () => {
 		delivery.deliver({ ad: { id: "test-ad" } });
 		mockGt._flushCmd();
 
-		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
-			"hb_pb",
-			["10.00"],
-		);
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("hb_pb", [
+			"10.00",
+		]);
 	});
 
 	it("supports array values in direct targeting", () => {
@@ -322,9 +321,9 @@ describe("gpt plugin", () => {
 		delivery.deliver({ ad: { id: "test-ad" } });
 		mockGt._flushCmd();
 
-		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith(
-			"keywords",
-			["sports", "news"],
-		);
+		expect(mockGt._mockSlot.setTargeting).toHaveBeenCalledWith("keywords", [
+			"sports",
+			"news",
+		]);
 	});
 });

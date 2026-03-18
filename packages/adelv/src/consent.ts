@@ -1,4 +1,4 @@
-import { defaultSendBeacon, type BeaconSender } from "./tracking.js";
+import { type BeaconSender, defaultSendBeacon } from "./tracking.js";
 
 /**
  * Wrap a beacon sender with consent checking.

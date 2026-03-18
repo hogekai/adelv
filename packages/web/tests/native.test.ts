@@ -101,7 +101,9 @@ describe("native plugin", () => {
 		});
 
 		delivery.use(native({ render }));
-		delivery.deliver({ ad: { id: "banner-ad", display: { adm: "<div>banner</div>" } } });
+		delivery.deliver({
+			ad: { id: "banner-ad", display: { adm: "<div>banner</div>" } },
+		});
 
 		expect(render).not.toHaveBeenCalled();
 		expect(delivery.state).toBe("pending");
@@ -183,8 +185,9 @@ describe("native plugin", () => {
 	it("works with viewability plugin", () => {
 		vi.useFakeTimers();
 
-		let mockObserverCallback: ((entries: IntersectionObserverEntry[]) => void) | null =
-			null;
+		let mockObserverCallback:
+			| ((entries: IntersectionObserverEntry[]) => void)
+			| null = null;
 		vi.stubGlobal(
 			"IntersectionObserver",
 			vi.fn((callback: (entries: IntersectionObserverEntry[]) => void) => {
@@ -216,7 +219,9 @@ describe("native plugin", () => {
 		expect(delivery.state).toBe("rendered");
 
 		// trigger viewability
-		mockObserverCallback!([{ isIntersecting: true } as IntersectionObserverEntry]);
+		mockObserverCallback!([
+			{ isIntersecting: true } as IntersectionObserverEntry,
+		]);
 		vi.advanceTimersByTime(1000);
 
 		expect(viewableHandler).toHaveBeenCalledOnce();

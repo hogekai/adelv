@@ -87,3 +87,21 @@ idle → pending → rendering → rendered → destroyed
 | rendered transition | burl + IMPRESSION equivalent from event[] + auto-emit impression event |
 | viewable event | VIEWABLE_MRC_50 equivalent from event[] (deduplicated, fires once only) |
 | click event | LinkAsset.trkr[] (no guard, multiple fires OK) |
+
+## Release
+
+Uses [changesets](https://github.com/changesets/changesets) for versioning.
+
+```bash
+pnpm changeset          # Create a changeset (describe what changed)
+pnpm version            # Bump versions and update CHANGELOGs
+pnpm release            # Build and publish to npm
+```
+
+Or use the slash command: `/release`
+
+GitHub Actions:
+- CI: runs on push/PR to main. lint → typecheck → test → build.
+- Release: runs on push to main. Creates Release PR or publishes to npm via changesets/action.
+
+Requires `NPM_TOKEN` in repository secrets for npm publish.

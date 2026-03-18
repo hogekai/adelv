@@ -94,10 +94,7 @@ export function gpt(opts: {
 					}
 
 					for (const [key, value] of Object.entries(mergedKv)) {
-						slot.setTargeting(
-							key,
-							Array.isArray(value) ? value : [value],
-						);
+						slot.setTargeting(key, Array.isArray(value) ? value : [value]);
 					}
 
 					listener = (e) => {
