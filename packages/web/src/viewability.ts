@@ -1,4 +1,4 @@
-import type { DeliveryPlugin } from "@adelv/ortb3";
+import type { DeliveryPlugin } from "@adelv/adelv";
 
 /**
  * MRC viewability measurement plugin using IntersectionObserver.

@@ -1,5 +1,5 @@
-import { createDelivery } from "@adelv/ortb3";
-import type { DeliveryInput, PluginDelivery } from "@adelv/ortb3";
+import { createDelivery } from "@adelv/adelv";
+import type { DeliveryInput, PluginDelivery } from "@adelv/adelv";
 import { EventTrackingMethod, EventType } from "iab-adcom/enum";
 import type { Ad } from "iab-adcom/media";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

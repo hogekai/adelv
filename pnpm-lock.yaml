@@ -21,24 +21,29 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(happy-dom@17.6.3)
 
-  packages/ortb3:
+  packages/adelv:
     dependencies:
       iab-adcom:
         specifier: ^1.0.0
         version: 1.0.6
 
-  packages/ortb3-web:
+  packages/gpt:
     dependencies:
-      '@adelv/ortb3':
+      '@adelv/adelv':
         specifier: workspace:*
-        version: link:../ortb3
-      iab-adcom:
-        specifier: ^1.0.0
-        version: 1.0.6
-    devDependencies:
+        version: link:../adelv
       iab-openrtb:
         specifier: ^1.0.0
         version: 1.0.1
+
+  packages/web:
+    dependencies:
+      '@adelv/adelv':
+        specifier: workspace:*
+        version: link:../adelv
+      iab-adcom:
+        specifier: ^1.0.0
+        version: 1.0.6
 
 packages:
 

@@ -1,4 +1,4 @@
-import type { DeliveryPlugin } from "@adelv/ortb3";
+import type { DeliveryPlugin } from "@adelv/adelv";
 import type { Ad } from "iab-adcom/media";
 
 function getLandingUrl(ad: Ad): string | undefined {

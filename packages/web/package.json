@@ -1,5 +1,5 @@
 {
-	"name": "@adelv/ortb3-web",
+	"name": "@adelv/web",
 	"version": "0.0.0",
 	"type": "module",
 	"exports": {
@@ -14,10 +14,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@adelv/ortb3": "workspace:*",
+		"@adelv/adelv": "workspace:*",
 		"iab-adcom": "^1.0.0"
-	},
-	"devDependencies": {
-		"iab-openrtb": "^1.0.0"
 	}
 }

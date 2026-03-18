@@ -1,26 +1,32 @@
-# @adelv/ortb3
+# @adelv/adelv
 
-OpenRTB 3.0 ad delivery core. Receives an AdCOM Ad object, delivers it, and fires all tracking beacons at the correct timing.
+Ad delivery core. Receives an AdCOM Ad object, delivers it, and fires all tracking beacons at the correct timing.
 
 Environment-agnostic. No DOM dependency. Rendering and measurement are delegated to plugins.
 
 ## Install
 
 ```bash
-npm install @adelv/ortb3
+npm install @adelv/adelv
 ```
 
-For web rendering plugins (banner, viewability, click, gpt):
+For web rendering plugins (banner, viewability, click):
 
 ```bash
-npm install @adelv/ortb3-web
+npm install @adelv/web
+```
+
+For GPT integration:
+
+```bash
+npm install @adelv/gpt
 ```
 
 ## Usage
 
 ```typescript
-import { createDelivery } from "@adelv/ortb3"
-import { banner, viewability, click } from "@adelv/ortb3-web"
+import { createDelivery } from "@adelv/adelv"
+import { banner, viewability, click } from "@adelv/web"
 
 const delivery = createDelivery(document.getElementById("ad-slot")!)
 delivery.use(banner())
@@ -64,8 +70,8 @@ Beacon failure emits `error` event with `source: "tracking"`. State is unaffecte
 ## Custom Beacon
 
 ```typescript
-import { createDelivery } from "@adelv/ortb3"
-import type { BeaconSender } from "@adelv/ortb3"
+import { createDelivery } from "@adelv/adelv"
+import type { BeaconSender } from "@adelv/adelv"
 
 const sendBeacon: BeaconSender = async (url) => {
   navigator.sendBeacon(url)
@@ -77,7 +83,7 @@ const delivery = createDelivery(element, { sendBeacon })
 ## Custom Plugins
 
 ```typescript
-import type { DeliveryPlugin } from "@adelv/ortb3"
+import type { DeliveryPlugin } from "@adelv/adelv"
 
 function myPlugin(): DeliveryPlugin<HTMLElement> {
   return {

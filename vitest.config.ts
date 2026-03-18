@@ -7,15 +7,22 @@ export default defineConfig({
 		projects: [
 			{
 				test: {
-					name: "ortb3",
-					include: ["packages/ortb3/tests/**/*.test.ts"],
+					name: "adelv",
+					include: ["packages/adelv/tests/**/*.test.ts"],
 					environment: "node",
 				},
 			},
 			{
 				test: {
-					name: "ortb3-web",
-					include: ["packages/ortb3-web/tests/**/*.test.ts"],
+					name: "web",
+					include: ["packages/web/tests/**/*.test.ts"],
+					environment: "happy-dom",
+				},
+			},
+			{
+				test: {
+					name: "gpt",
+					include: ["packages/gpt/tests/**/*.test.ts"],
 					environment: "happy-dom",
 				},
 			},

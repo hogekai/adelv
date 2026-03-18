@@ -1,4 +1,4 @@
-import { createDelivery } from "@adelv/ortb3";
+import { createDelivery } from "@adelv/adelv";
 import type { Bid } from "iab-openrtb/v30";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { gpt } from "../src/gpt.js";

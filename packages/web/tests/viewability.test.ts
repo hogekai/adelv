@@ -1,5 +1,5 @@
-import { createDelivery } from "@adelv/ortb3";
-import type { PluginDelivery } from "@adelv/ortb3";
+import { createDelivery } from "@adelv/adelv";
+import type { PluginDelivery } from "@adelv/adelv";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { viewability } from "../src/viewability.js";
 

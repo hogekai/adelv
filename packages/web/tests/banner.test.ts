@@ -1,5 +1,5 @@
-import { createDelivery } from "@adelv/ortb3";
-import type { DeliveryInput, PluginDelivery } from "@adelv/ortb3";
+import { createDelivery } from "@adelv/adelv";
+import type { DeliveryInput, PluginDelivery } from "@adelv/adelv";
 import { describe, expect, it, vi } from "vitest";
 import { banner } from "../src/banner.js";
 

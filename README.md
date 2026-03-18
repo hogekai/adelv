@@ -8,13 +8,17 @@ Completely independent from trawl (collection). Zero dependencies between them. 
 
 | Package | Description |
 |---|---|
-| [@adelv/ortb3](./packages/ortb3) | OpenRTB 3.0 delivery core. Environment-agnostic. |
-| [@adelv/ortb3-web](./packages/ortb3-web) | Web plugins: banner, viewability, click, gpt |
+| [@adelv/adelv](./packages/adelv) | Ad delivery core. Environment-agnostic. |
+| [@adelv/web](./packages/web) | Web plugins: banner, viewability, click |
+| [@adelv/gpt](./packages/gpt) | Google Publisher Tag integration |
 
 ## Install
 
 ```bash
-npm install @adelv/ortb3 @adelv/ortb3-web
+npm install @adelv/adelv @adelv/web
+
+# GPT integration
+npm install @adelv/gpt
 ```
 
 ## Quick Start
@@ -22,8 +26,8 @@ npm install @adelv/ortb3 @adelv/ortb3-web
 ### Banner (without GPT)
 
 ```typescript
-import { createDelivery } from "@adelv/ortb3"
-import { banner, viewability, click } from "@adelv/ortb3-web"
+import { createDelivery } from "@adelv/adelv"
+import { banner, viewability, click } from "@adelv/web"
 
 const ad = createDelivery(document.getElementById("ad-slot")!)
 ad.use(banner())
@@ -45,8 +49,8 @@ ad.deliver({
 ### With GPT
 
 ```typescript
-import { createDelivery } from "@adelv/ortb3"
-import { gpt } from "@adelv/ortb3-web"
+import { createDelivery } from "@adelv/adelv"
+import { gpt } from "@adelv/gpt"
 
 const ad = createDelivery(document.getElementById("ad-slot")!)
 ad.use(gpt({
@@ -78,9 +82,9 @@ ads.demand("ssp-b", { endpoint: "https://ssp-b.com/bid" })
 const result = await ads.bid()
 const winners = auction(result.bids, byPrice())
 
-// Delivery (@adelv/ortb3 — knows nothing about trawl)
-import { createDelivery } from "@adelv/ortb3"
-import { banner as bannerPlugin, viewability, click } from "@adelv/ortb3-web"
+// Delivery (@adelv/adelv — knows nothing about trawl)
+import { createDelivery } from "@adelv/adelv"
+import { banner as bannerPlugin, viewability, click } from "@adelv/web"
 
 const headerBid = winners.get("header")
 if (headerBid) {
@@ -130,7 +134,7 @@ Beacon failure does not affect state transitions. An `error` event with `source:
 ## Custom Plugins
 
 ```typescript
-import type { DeliveryPlugin } from "@adelv/ortb3"
+import type { DeliveryPlugin } from "@adelv/adelv"
 
 function myPlugin(): DeliveryPlugin<HTMLElement> {
   return {
@@ -163,8 +167,8 @@ Plugins are trusted code with full access via `PluginDelivery`:
 ## Custom Beacon
 
 ```typescript
-import { createDelivery } from "@adelv/ortb3"
-import type { BeaconSender } from "@adelv/ortb3"
+import { createDelivery } from "@adelv/adelv"
+import type { BeaconSender } from "@adelv/adelv"
 
 const sendBeacon: BeaconSender = async (url) => {
   navigator.sendBeacon(url)
@@ -230,7 +234,7 @@ interface DeliveryPlugin<T> {
 | `banner()` | Renders display ads via iframe. `DeliveryPlugin<HTMLElement>` |
 | `viewability(opts?)` | MRC viewability measurement. threshold (default 0.5), duration (default 1000ms) |
 | `click()` | Click detection for target elements and iframe focus. |
-| `gpt(opts)` | Google Publisher Tag integration. adUnit, sizes, bids. |
+| `gpt(opts)` | Google Publisher Tag integration. See [@adelv/gpt](./packages/gpt). |
 
 ## License
 

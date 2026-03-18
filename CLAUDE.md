@@ -8,9 +8,9 @@ Completely independent from trawl (collection). Zero dependencies between them.
 ```
 adelv/
 ├── packages/
-│   ├── ortb3/          ← @adelv/ortb3 (core, environment-agnostic)
-│   ├── ortb3-web/      ← @adelv/ortb3-web (web-specific plugins)
-│   └── ortb3-ssai/     ← @adelv/ortb3-ssai (SSAI-specific, to be added later)
+│   ├── adelv/          ← @adelv/adelv (delivery core, environment-agnostic)
+│   ├── web/            ← @adelv/web (web plugins: banner, viewability, click)
+│   └── gpt/            ← @adelv/gpt (GPT plugin)
 ├── instructions/        ← Phase-based implementation specs
 ├── package.json         ← Root (pnpm workspace)
 ├── pnpm-workspace.yaml
@@ -33,12 +33,12 @@ pnpm lint:fix             # Auto-fix lint issues across all packages
 ## Inter-package Dependencies
 
 ```
-@adelv/ortb3         → iab-adcom (AdCOM type definitions)
-@adelv/ortb3-web     → @adelv/ortb3, iab-adcom, iab-openrtb (GPT plugin only)
-@adelv/ortb3-ssai    → @adelv/ortb3
+@adelv/adelv     → iab-adcom (AdCOM type definitions)
+@adelv/web       → @adelv/adelv, iab-adcom
+@adelv/gpt       → @adelv/adelv, iab-openrtb
 ```
 
-Core (@adelv/ortb3) does not depend on iab-openrtb. Transaction Layer type containment.
+Core (@adelv/adelv) does not depend on iab-openrtb. Transaction Layer type containment.
 
 ## Architecture
 
@@ -64,7 +64,7 @@ Core (@adelv/ortb3) does not depend on iab-openrtb. Transaction Layer type conta
 import type { Ad, Display, Video, Audio, Event } from "iab-adcom/media"
 import { EventType, EventTrackingMethod } from "iab-adcom/enum"
 
-// web/gpt.ts only
+// gpt/gpt.ts only
 import type { Bid, Seatbid } from "iab-openrtb/v30"
 ```
 

@@ -1,11 +1,13 @@
-# @adelv/ortb3-web
+# @adelv/web
 
-Web plugins for [@adelv/ortb3](https://www.npmjs.com/package/@adelv/ortb3). Banner rendering, MRC viewability, click detection, and Google Publisher Tag integration.
+Web plugins for [@adelv/adelv](https://www.npmjs.com/package/@adelv/adelv). Banner rendering, MRC viewability, and click detection.
+
+See [@adelv/gpt](https://www.npmjs.com/package/@adelv/gpt) for Google Publisher Tag integration.
 
 ## Install
 
 ```bash
-npm install @adelv/ortb3 @adelv/ortb3-web
+npm install @adelv/adelv @adelv/web
 ```
 
 ## Plugins
@@ -15,8 +17,8 @@ npm install @adelv/ortb3 @adelv/ortb3-web
 Renders display ads via sandboxed iframe. Reads `ad.display.adm` markup.
 
 ```typescript
-import { createDelivery } from "@adelv/ortb3"
-import { banner } from "@adelv/ortb3-web"
+import { createDelivery } from "@adelv/adelv"
+import { banner } from "@adelv/web"
 
 // Default usage
 const delivery = createDelivery(document.getElementById("ad-slot")!)
@@ -56,7 +58,7 @@ Options:
 MRC viewability measurement using IntersectionObserver.
 
 ```typescript
-import { viewability } from "@adelv/ortb3-web"
+import { viewability } from "@adelv/web"
 
 delivery.use(viewability())
 
@@ -76,7 +78,7 @@ delivery.use(viewability({
 Click detection for target elements and iframe focus.
 
 ```typescript
-import { click } from "@adelv/ortb3-web"
+import { click } from "@adelv/web"
 
 delivery.use(click())
 ```
@@ -85,51 +87,6 @@ delivery.use(click())
 - **Iframe clicks**: Detects via `window.blur` + `document.activeElement` heuristic (best effort)
 - Landing URL is extracted from `ad.display.banner.link.url` or `ad.display.native.link.url`
 - Starts after `rendered`
-
-### `gpt(opts)`
-
-Google Publisher Tag integration. Defines a slot, sets header bidding targeting, and renders via GPT.
-
-```typescript
-import { createDelivery } from "@adelv/ortb3"
-import { gpt } from "@adelv/ortb3-web"
-
-const delivery = createDelivery(document.getElementById("ad-slot")!)
-delivery.use(gpt({
-  adUnit: "/12345/header",
-  sizes: [[728, 90], [970, 250]],
-  bids: auctionBids,
-  targeting: {
-    hb_bidder: "ssp-a",
-  },
-}))
-delivery.deliver({ ad, purl, burl })
-```
-
-Options:
-
-| Option | Type | Description |
-|---|---|---|
-| `adUnit` | `string` | GAM ad unit path. |
-| `sizes` | `[number, number][]` | Ad sizes. |
-| `bids` | `Bid[]` | Optional. Auto-generates `hb_pb`, `hb_deal`, `hb_size` targeting. |
-| `targeting` | `Record<string, string \| string[]>` | Optional. Direct key-values. Merged after auto-generated targeting (overrides on conflict). |
-
-- `pending` → defines GPT slot → `disableInitialLoad` → sets targeting → `refresh`
-- `slotRenderEnded` → transitions to `rendered`
-- Cleanup destroys the GPT slot and removes event listeners
-- `enableServices()` is called once globally, not per slot
-
-#### `buildTargeting(bids)`
-
-Utility to build GAM targeting from bids. Exported for composition.
-
-```typescript
-import { buildTargeting } from "@adelv/ortb3-web"
-
-const kv = buildTargeting(bids)
-// { hb_pb: "2.50", hb_deal: "deal-123", hb_size: "300x250" }
-```
 
 ## Plugin Composition
 
