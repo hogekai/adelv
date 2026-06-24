@@ -1,5 +1,18 @@
-import { EventTrackingMethod, type EventType } from "iab-adcom/enum";
+import { EventTrackingMethod, EventType } from "iab-adcom/enum";
 import type { Ad, Event } from "iab-adcom/media";
+import type { ViewableStandard } from "./types.js";
+
+/** Map a viewability standard to its AdCOM `EventType`. */
+const VIEWABLE_EVENT_TYPE: Record<ViewableStandard, EventType> = {
+	mrc50: EventType.VIEWABLE_MRC_50,
+	mrc100: EventType.VIEWABLE_MRC_100,
+	video50: EventType.VIEWABLE_VIDEO_50,
+};
+
+/** Resolve the AdCOM `EventType` fired for a given viewability standard. */
+export function viewableEventType(standard: ViewableStandard): EventType {
+	return VIEWABLE_EVENT_TYPE[standard];
+}
 
 /**
  * Function signature for sending tracking beacons.
@@ -19,16 +32,23 @@ export const defaultSendBeacon: BeaconSender = async (url: string) => {
 	await fetch(url, { method: "GET", keepalive: true });
 };
 
-/** Filter ad.display.event by EventType and return IMAGE_PIXEL URLs. */
-export function getEventUrls(ad: Ad, type: EventType): string[] {
+/**
+ * Filter `ad.display.event` by `EventType` and tracking `method`, returning URLs.
+ *
+ * @param method - Tracking method to extract. Defaults to `IMAGE_PIXEL` (core
+ *   fires these as beacons). Pass `JAVASCRIPT` from web plugins that inject script tags.
+ */
+export function getEventUrls(
+	ad: Ad,
+	type: EventType,
+	method: EventTrackingMethod = EventTrackingMethod.IMAGE_PIXEL,
+): string[] {
 	const events = ad.display?.event;
 	if (!events) return [];
 	return events
 		.filter(
 			(e): e is Event & { url: string } =>
-				e.type === type &&
-				e.method === EventTrackingMethod.IMAGE_PIXEL &&
-				typeof e.url === "string",
+				e.type === type && e.method === method && typeof e.url === "string",
 		)
 		.map((e) => e.url);
 }

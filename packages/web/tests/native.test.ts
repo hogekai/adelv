@@ -220,7 +220,10 @@ describe("native plugin", () => {
 
 		// trigger viewability
 		mockObserverCallback!([
-			{ isIntersecting: true } as IntersectionObserverEntry,
+			{
+				isIntersecting: true,
+				intersectionRatio: 1,
+			} as IntersectionObserverEntry,
 		]);
 		vi.advanceTimersByTime(1000);
 

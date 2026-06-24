@@ -1,5 +1,6 @@
 import type { DeliveryPlugin } from "@adelv/adelv";
 import type { Ad } from "iab-adcom/media";
+import { delegatedRenderer } from "./delegated-renderer.js";
 
 /**
  * Options for the `native()` plugin.
@@ -28,50 +29,9 @@ export interface NativeOptions {
  * @returns A `DeliveryPlugin<HTMLElement>` for native ad rendering.
  */
 export function native(opts: NativeOptions): DeliveryPlugin<HTMLElement> {
-	return {
-		name: "native",
-		setup(delivery, signal) {
-			let renderCleanup: (() => void) | null = null;
-
-			delivery.on("statechange", ({ to }) => {
-				if (to !== "pending") return;
-
-				const input = delivery.input;
-				if (!input?.ad.display?.native) return;
-
-				delivery.setState("rendering");
-
-				if (signal.aborted) return;
-
-				try {
-					const result = opts.render(delivery.target, input.ad);
-					if (signal.aborted) return;
-
-					if (typeof result === "function") {
-						renderCleanup = result;
-					}
-
-					delivery.setState("rendered");
-				} catch (e) {
-					if (signal.aborted) return;
-					const message = e instanceof Error ? e.message : String(e);
-					delivery.emit("error", {
-						ts: Date.now(),
-						message: `Native render failed: ${message}`,
-						source: "native",
-					});
-					delivery.setState("error");
-				}
-			});
-
-			return () => {
-				if (renderCleanup) {
-					renderCleanup();
-					renderCleanup = null;
-				} else {
-					delivery.target.innerHTML = "";
-				}
-			};
-		},
-	};
+	return delegatedRenderer(
+		"native",
+		(ad) => ad.display?.native != null,
+		opts.render,
+	);
 }

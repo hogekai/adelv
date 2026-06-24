@@ -35,16 +35,16 @@ describe("createEventBus", () => {
 		expect(() => bus.off("statechange", () => {})).not.toThrow();
 	});
 
-	it("viewable fires only once (dedup guard)", () => {
+	it("is a generic bus: viewable is not deduped at the bus level", () => {
+		// Per-standard dedup lives in the delivery domain layer, not the bus.
 		const bus = createEventBus();
 		const handler = vi.fn();
 
 		bus.on("viewable", handler);
-		bus.emit("viewable", { ts: 1 });
-		bus.emit("viewable", { ts: 2 });
+		bus.emit("viewable", { ts: 1, standard: "mrc50" });
+		bus.emit("viewable", { ts: 2, standard: "mrc50" });
 
-		expect(handler).toHaveBeenCalledOnce();
-		expect(handler).toHaveBeenCalledWith({ ts: 1 });
+		expect(handler).toHaveBeenCalledTimes(2);
 	});
 
 	it("click fires multiple times", () => {

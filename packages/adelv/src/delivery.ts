@@ -6,6 +6,7 @@ import {
 	fireBeacons,
 	getClickTrackerUrls,
 	getEventUrls,
+	viewableEventType,
 } from "./tracking.js";
 import type {
 	Delivery,
@@ -15,6 +16,7 @@ import type {
 	DeliveryPlugin,
 	DeliveryState,
 	PluginDelivery,
+	ViewableStandard,
 } from "./types.js";
 
 /**
@@ -47,10 +49,13 @@ export function createDelivery<T>(
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
 	const bus = createEventBus();
 	const cleanups: Array<() => void> = [];
+	// [Invariant]: each viewability standard fires at most once per delivery.
+	// Dedup lives here (domain layer), keyed by standard, gating emission in pluginEmit.
+	const firedStandards = new Set<ViewableStandard>();
 
-	bus.on("viewable", () => {
+	bus.on("viewable", ({ standard }) => {
 		if (!input) return;
-		const urls = getEventUrls(input.ad, EventType.VIEWABLE_MRC_50);
+		const urls = getEventUrls(input.ad, viewableEventType(standard));
 		fireBeacons(urls, sendBeacon, trackingError);
 	});
 
@@ -113,8 +118,11 @@ export function createDelivery<T>(
 			bus.emit("impression", { ts: Date.now() });
 
 			if (input) {
+				// rendered = markup loaded and shown: LOADED and IMPRESSION coincide
+				// at this library's granularity.
 				const urls: string[] = [];
 				if (input.burl) urls.push(input.burl);
+				urls.push(...getEventUrls(input.ad, EventType.LOADED));
 				urls.push(...getEventUrls(input.ad, EventType.IMPRESSION));
 				fireBeacons(urls, sendBeacon, trackingError);
 			}
@@ -135,6 +143,11 @@ export function createDelivery<T>(
 		data: DeliveryEventMap[K],
 	): void {
 		if (state === "destroyed") return;
+		if (event === "viewable") {
+			const { standard } = data as DeliveryEventMap["viewable"];
+			if (firedStandards.has(standard)) return;
+			firedStandards.add(standard);
+		}
 		bus.emit(event, data);
 	}
 

@@ -34,7 +34,7 @@ delivery.use(viewability())
 delivery.use(click())
 
 delivery.on("impression", ({ ts }) => console.log("impression", ts))
-delivery.on("viewable", ({ ts }) => console.log("viewable", ts))
+delivery.on("viewable", ({ ts, standard }) => console.log("viewable", standard, ts))
 delivery.on("click", ({ ts, url }) => console.log("click", url, ts))
 delivery.on("error", ({ message, source }) => console.error(source, message))
 
@@ -61,11 +61,11 @@ idle → pending → rendering → rendered → destroyed
 | Timing | Fires |
 |---|---|
 | pending | `purl` |
-| rendered | `burl` + `event[]` IMPRESSION trackers |
-| viewable | `event[]` VIEWABLE_MRC_50 trackers (once) |
+| rendered | `burl` + `event[]` LOADED & IMPRESSION trackers |
+| viewable | `event[]` tracker for the met `standard` (`mrc50`/`mrc100`/`video50`), once per standard |
 | click | `LinkAsset.trkr[]` click trackers (every time) |
 
-Beacon failure emits `error` event with `source: "tracking"`. State is unaffected.
+Core fires `IMAGE_PIXEL` trackers as beacons. `JAVASCRIPT` trackers are handled by `@adelv/web`'s `jsTracker()`. Beacon failure emits an `error` event with `source: "tracking"`; state is unaffected.
 
 ## Custom Beacon
 

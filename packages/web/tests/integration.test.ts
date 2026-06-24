@@ -39,7 +39,12 @@ function setupMockIntersectionObserver() {
 }
 
 function fireIntersection(isIntersecting: boolean) {
-	mockObserverCallback!([{ isIntersecting } as IntersectionObserverEntry]);
+	mockObserverCallback!([
+		{
+			isIntersecting,
+			intersectionRatio: isIntersecting ? 1 : 0,
+		} as IntersectionObserverEntry,
+	]);
 }
 
 const testAd: Ad = {
@@ -170,7 +175,7 @@ describe("integration", () => {
 		expect(sendBeacon).toHaveBeenCalledWith("https://t.example.com/imp");
 
 		sendBeacon.mockClear();
-		pd!.emit("viewable", { ts: Date.now() });
+		pd!.emit("viewable", { ts: Date.now(), standard: "mrc50" });
 
 		// viewable tracker
 		expect(sendBeacon).toHaveBeenCalledWith("https://t.example.com/view");
@@ -245,7 +250,7 @@ describe("integration", () => {
 
 		const viewableHandler = vi.fn();
 		delivery.on("viewable", viewableHandler);
-		pd!.emit("viewable", { ts: Date.now() });
+		pd!.emit("viewable", { ts: Date.now(), standard: "mrc50" });
 
 		expect(viewableHandler).not.toHaveBeenCalled();
 		expect(delivery.state).toBe("destroyed");

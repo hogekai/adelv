@@ -35,6 +35,7 @@ delivery.deliver({ ad, purl, burl })
 | `bids` | `Bid[]` | Optional. Auto-generates `hb_pb`, `hb_deal`, `hb_size` targeting. |
 | `targeting` | `Record<string, string \| string[]>` | Optional. Direct key-values. Merged after auto-generated targeting (overrides on conflict). |
 
+- The delivery target **must have a non-empty `id`** (GPT keys the slot by DOM id). Otherwise the plugin emits an `error` (`source: "gpt"`) and transitions to `error`.
 - `pending` → defines GPT slot → `disableInitialLoad` → sets targeting → `refresh`
 - `slotRenderEnded` → transitions to `rendered`
 - Cleanup destroys the GPT slot and removes event listeners

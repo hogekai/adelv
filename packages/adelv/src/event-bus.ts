@@ -22,7 +22,6 @@ export function createEventBus(): EventBus {
 		keyof DeliveryEventMap,
 		((data: never) => void)[]
 	>();
-	let viewableFired = false;
 
 	return {
 		on(event, handler) {
@@ -44,11 +43,6 @@ export function createEventBus(): EventBus {
 		},
 
 		emit(event, data) {
-			if (event === "viewable") {
-				if (viewableFired) return;
-				viewableFired = true;
-			}
-
 			const handlers = listeners.get(event);
 			if (!handlers) return;
 			for (const handler of [...handlers]) {

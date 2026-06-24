@@ -16,6 +16,15 @@ export type DeliveryState =
 	| "error"
 	| "destroyed";
 
+/**
+ * Viewability standard met, as defined by AdCOM `EventType`.
+ *
+ * - `mrc50` — 50% of pixels visible for 1 continuous second (`VIEWABLE_MRC_50`).
+ * - `mrc100` — 100% of pixels visible for 1 continuous second (`VIEWABLE_MRC_100`).
+ * - `video50` — 50% of pixels visible for 2 continuous seconds (`VIEWABLE_VIDEO_50`).
+ */
+export type ViewableStandard = "mrc50" | "mrc100" | "video50";
+
 /** State machine transition whitelist. */
 export const TRANSITIONS: Record<DeliveryState, readonly DeliveryState[]> = {
 	idle: ["pending", "destroyed"],
@@ -60,7 +69,8 @@ export interface DeliveryOptions {
  *
  * - `statechange` — Fired on every state transition.
  * - `impression` — Fired once when entering `rendered`.
- * - `viewable` — Fired by plugins. Core deduplicates (fires trackers once).
+ * - `viewable` — Fired by plugins, carrying the MRC `standard` met. Core
+ *   deduplicates per standard (fires each standard's trackers once).
  * - `click` — Fired by plugins. Every emission fires click trackers.
  * - `error` — Rendering errors, tracking failures, timeouts.
  * - `destroy` — Fired when delivery is destroyed.
@@ -68,7 +78,7 @@ export interface DeliveryOptions {
 export interface DeliveryEventMap {
 	statechange: { from: DeliveryState; to: DeliveryState };
 	impression: { ts: number };
-	viewable: { ts: number };
+	viewable: { ts: number; standard: ViewableStandard };
 	click: { ts: number; url: string };
 	error: { ts: number; message: string; source: string };
 	destroy: undefined;

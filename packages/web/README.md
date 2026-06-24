@@ -1,6 +1,6 @@
 # @adelv/web
 
-Web plugins for [@adelv/adelv](https://www.npmjs.com/package/@adelv/adelv). Banner rendering, native ad rendering, MRC viewability, and click detection.
+Web plugins for [@adelv/adelv](https://www.npmjs.com/package/@adelv/adelv). Banner, native, video, and audio rendering; MRC viewability; click detection; and JavaScript tracker injection.
 
 See [@adelv/gpt](https://www.npmjs.com/package/@adelv/gpt) for Google Publisher Tag integration.
 
@@ -14,7 +14,10 @@ npm install @adelv/adelv @adelv/web
 
 ### `banner(opts?)`
 
-Renders display ads via sandboxed iframe. Reads `ad.display.adm` markup.
+Renders display ads. Two shapes are supported:
+
+- **Markup** — `ad.display.adm` rendered in a sandboxed iframe.
+- **Structured image** — `ad.display.banner.img` rendered as an `<img>`, wrapped in an `<a href>` when `ad.display.banner.link.url` is set.
 
 ```typescript
 import { createDelivery } from "@adelv/adelv"
@@ -48,10 +51,9 @@ Options:
 | `attrs` | `Record<string, string>` | — | Additional iframe attributes. |
 | `style` | `Partial<CSSStyleDeclaration>` | `{ border: "none" }` | CSS styles. Merged with defaults. |
 
-- `pending` → reads `ad.display.adm` → creates iframe with `srcdoc`
-- `iframe.onload` → transitions to `rendered`
-- `iframe.onerror` → transitions to `error`
-- Cleanup removes iframe from DOM
+- `pending` → `adm` → iframe `srcdoc`; otherwise `banner.img` → `<img>` (+ `<a>` if linked)
+- `onload` → transitions to `rendered`; `onerror` → transitions to `error`
+- Cleanup removes the element from DOM
 
 ### `viewability(opts?)`
 
@@ -62,16 +64,21 @@ import { viewability } from "@adelv/web"
 
 delivery.use(viewability())
 
-// Custom thresholds
+// Measure multiple MRC standards
 delivery.use(viewability({
-  threshold: 0.5,   // 50% area visible (default)
-  duration: 1000,   // 1 second continuous (default)
+  standards: ["mrc50", "mrc100", "video50"],
 }))
 ```
 
+| Standard | Criteria | AdCOM EventType |
+|---|---|---|
+| `mrc50` (default) | 50% visible for 1s continuous | `VIEWABLE_MRC_50` |
+| `mrc100` | 100% visible for 1s continuous | `VIEWABLE_MRC_100` |
+| `video50` | 50% visible for 2s continuous | `VIEWABLE_VIDEO_50` |
+
 - Starts observing after `rendered`
-- Emits `viewable` event once threshold is met for duration
-- Core deduplicates: trackers fire once regardless of multiple emits
+- Emits a `viewable` event carrying the met `standard`; each standard fires once
+- Core maps the standard to its `EventType` and deduplicates per standard
 
 ### `native(opts)`
 
@@ -110,6 +117,45 @@ delivery.use(native({
 - Optionally return a cleanup function. Default cleanup: `target.innerHTML = ""`
 - Errors in `render` transition to `error` state
 
+### `video(opts)` / `audio(opts)`
+
+Video (`ad.video`, VAST) and audio (`ad.audio`, DAAST) renderers. Like `native()`,
+they delegate to a user render function — playback and in-stream tracking are the
+external player's responsibility (the VAST/DAAST document carries its own trackers,
+so these media have no AdCOM `event[]`).
+
+```typescript
+import { video } from "@adelv/web"
+
+delivery.use(video({
+  render(target, ad) {
+    const player = mountVastPlayer(target, ad.video!.adm!)
+    return () => player.destroy()
+  },
+}))
+```
+
+- Skips if `ad.video` (or `ad.audio`) is not present
+- Same lifecycle and cleanup semantics as `native()`
+- `burl` still fires on `rendered`; impression/viewability event[] do not apply
+
+### `jsTracker(opts?)`
+
+Injects `EventTrackingMethod.JAVASCRIPT` trackers from `ad.display.event` as
+`<script>` tags. Core fires `IMAGE_PIXEL` trackers as beacons; this plugin
+handles the JavaScript method.
+
+```typescript
+import { jsTracker } from "@adelv/web"
+
+delivery.use(jsTracker())              // inject into the target element (default)
+delivery.use(jsTracker({ mount: "head" }))  // or into document.head
+```
+
+- On `impression` (rendered): injects `LOADED` + `IMPRESSION` JS trackers
+- On `viewable`: injects the JS tracker for the met standard's `EventType`
+- Cleanup removes all injected scripts
+
 ### `click()`
 
 Click detection for target elements and iframe focus.
@@ -133,9 +179,10 @@ Register rendering plugin first, then measurement plugins:
 delivery.use(banner())       // rendering plugin
 delivery.use(viewability())  // measurement plugin
 delivery.use(click())        // measurement plugin
+delivery.use(jsTracker())    // measurement plugin
 ```
 
-Only one rendering plugin per delivery (`banner()`, `native()`, or `gpt()`). Multiple measurement plugins are fine.
+Only one rendering plugin per delivery (`banner()`, `native()`, `video()`, `audio()`, or `gpt()`). Multiple measurement plugins (`viewability()`, `click()`, `jsTracker()`) are fine.
 
 ## License
 

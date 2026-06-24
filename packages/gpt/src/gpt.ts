@@ -64,6 +64,18 @@ export function gpt(opts: {
 			delivery.on("statechange", ({ to }) => {
 				if (to !== "pending") return;
 
+				// GPT keys the slot by the target element's DOM id; without it
+				// defineSlot silently fails downstream.
+				if (!delivery.target.id) {
+					delivery.emit("error", {
+						ts: Date.now(),
+						message: "GPT requires the delivery target to have a non-empty id",
+						source: "gpt",
+					});
+					delivery.setState("error");
+					return;
+				}
+
 				delivery.setState("rendering");
 
 				googletag.cmd.push(() => {

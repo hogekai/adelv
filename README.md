@@ -9,7 +9,7 @@ Completely independent from trawl (collection). Zero dependencies between them. 
 | Package | Description |
 |---|---|
 | [@adelv/adelv](./packages/adelv) | Ad delivery core. Environment-agnostic. |
-| [@adelv/web](./packages/web) | Web plugins: banner, viewability, click |
+| [@adelv/web](./packages/web) | Web plugins: banner, native, video, audio, viewability, click, jsTracker |
 | [@adelv/gpt](./packages/gpt) | Google Publisher Tag integration |
 
 ## Install
@@ -35,7 +35,7 @@ ad.use(viewability())
 ad.use(click())
 
 ad.on("impression", ({ ts }) => console.log("impression", ts))
-ad.on("viewable", ({ ts }) => console.log("viewable", ts))
+ad.on("viewable", ({ ts, standard }) => console.log("viewable", standard, ts))
 ad.on("click", ({ ts, url }) => console.log("click", url, ts))
 ad.on("error", ({ message, source }) => console.error(source, message))
 
@@ -69,8 +69,8 @@ ad.deliver({
 ### trawl + adelv
 
 ```typescript
-// Collection (ortb3-trawl — separate product)
-import { createAdSlots, imp, banner, auction, byPrice } from "ortb3-trawl"
+// Collection (trawl — separate product)
+import { createAdSlots, imp, banner, auction, byPrice } from "trawl"
 
 const ads = createAdSlots(
   imp("header", banner([728, 90])),
@@ -125,9 +125,11 @@ All tracking URLs fire automatically at the correct timing.
 | Timing | Fires |
 |---|---|
 | pending | `purl` (pending notification) |
-| rendered | `burl` (billing notification) + `event[]` IMPRESSION trackers |
-| viewable event | `event[]` VIEWABLE_MRC_50 trackers (once only) |
+| rendered | `burl` (billing notification) + `event[]` LOADED & IMPRESSION trackers |
+| viewable event | `event[]` tracker for the met standard (`mrc50`/`mrc100`/`video50`), once per standard |
 | click event | `LinkAsset.trkr[]` click trackers (every click) |
+
+`IMAGE_PIXEL` trackers fire as beacons automatically. `JAVASCRIPT` trackers are injected as `<script>` tags by the web [`jsTracker()`](./packages/web) plugin.
 
 Beacon failure does not affect state transitions. An `error` event with `source: "tracking"` is emitted.
 
@@ -235,10 +237,13 @@ Wrap a beacon sender with consent checking. When `getConsent()` returns `false`,
 
 | Plugin | Description |
 |---|---|
-| `banner()` | Renders display ads via iframe. `DeliveryPlugin<HTMLElement>` |
+| `banner(opts?)` | Display ads: `adm` markup via iframe, or structured `banner.img` as an image. `DeliveryPlugin<HTMLElement>` |
 | `native(opts)` | Native ad structured rendering via user render function. |
-| `viewability(opts?)` | MRC viewability measurement. threshold (default 0.5), duration (default 1000ms) |
+| `video(opts)` | Video ads (`ad.video`, VAST): delegates playback to a user render function. |
+| `audio(opts)` | Audio ads (`ad.audio`, DAAST): delegates playback to a user render function. |
+| `viewability(opts?)` | MRC viewability measurement. `standards` (default `["mrc50"]`; also `"mrc100"`, `"video50"`) |
 | `click()` | Click detection for target elements and iframe focus. |
+| `jsTracker(opts?)` | Injects `JAVASCRIPT`-method `event[]` trackers as `<script>` tags. |
 | `gpt(opts)` | Google Publisher Tag integration. See [@adelv/gpt](./packages/gpt). |
 
 ## License

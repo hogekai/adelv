@@ -1,6 +1,12 @@
+export { audio } from "./audio.js";
+export type { AudioOptions } from "./audio.js";
 export { banner } from "./banner.js";
 export type { BannerOptions } from "./banner.js";
 export { click } from "./click.js";
+export { jsTracker } from "./js-tracker.js";
+export type { JsTrackerOptions } from "./js-tracker.js";
 export { native } from "./native.js";
 export type { NativeOptions } from "./native.js";
+export { video } from "./video.js";
+export type { VideoOptions } from "./video.js";
 export { viewability } from "./viewability.js";

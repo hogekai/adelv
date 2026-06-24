@@ -97,6 +97,24 @@ describe("gpt plugin", () => {
 		);
 	});
 
+	it("errors without defining a slot when target has no id", () => {
+		const target = document.createElement("div");
+		// no target.id set
+		const delivery = createDelivery(target, {
+			logger: makeLogger(),
+			sendBeacon: makeSendBeacon(),
+		});
+		const errorHandler = vi.fn();
+		delivery.on("error", errorHandler);
+		delivery.use(gpt({ adUnit: "/1234/unit", sizes: [[300, 250]] }));
+		delivery.deliver({ ad: { id: "test-ad" } });
+		mockGt._flushCmd();
+
+		expect(delivery.state).toBe("error");
+		expect(mockGt.defineSlot).not.toHaveBeenCalled();
+		expect(errorHandler.mock.calls[0]![0]).toMatchObject({ source: "gpt" });
+	});
+
 	it("transitions to rendered on slotRenderEnded", () => {
 		const target = document.createElement("div");
 		target.id = "ad-slot-1";

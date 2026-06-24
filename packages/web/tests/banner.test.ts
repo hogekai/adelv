@@ -264,4 +264,106 @@ describe("banner plugin", () => {
 		expect(iframe.getAttribute("loading")).toBe("lazy");
 		expect(iframe.getAttribute("referrerpolicy")).toBe("no-referrer");
 	});
+
+	describe("structured image banner", () => {
+		function imageAdInput(withLink = true): DeliveryInput {
+			return {
+				ad: {
+					id: "img-ad",
+					display: {
+						w: 300,
+						h: 250,
+						banner: {
+							img: "https://cdn.example.com/ad.jpg",
+							link: withLink
+								? { url: "https://advertiser.example.com" }
+								: undefined,
+						},
+					},
+				},
+			};
+		}
+
+		it("renders an <img> when adm is absent but banner.img is present", () => {
+			const target = document.createElement("div");
+			const delivery = createDelivery(target, {
+				logger: makeLogger(),
+				sendBeacon: makeSendBeacon(),
+			});
+			delivery.use(banner());
+			delivery.deliver(imageAdInput(false));
+
+			expect(target.querySelector("iframe")).toBeNull();
+			const img = target.querySelector("img")!;
+			expect(img).not.toBeNull();
+			expect(img.src).toBe("https://cdn.example.com/ad.jpg");
+			expect(img.width).toBe(300);
+			expect(img.height).toBe(250);
+		});
+
+		it("wraps the image in an anchor when banner.link.url is present", () => {
+			const target = document.createElement("div");
+			const delivery = createDelivery(target, {
+				logger: makeLogger(),
+				sendBeacon: makeSendBeacon(),
+			});
+			delivery.use(banner());
+			delivery.deliver(imageAdInput(true));
+
+			const anchor = target.querySelector("a")!;
+			expect(anchor).not.toBeNull();
+			expect(anchor.getAttribute("href")).toBe(
+				"https://advertiser.example.com",
+			);
+			expect(anchor.querySelector("img")).not.toBeNull();
+		});
+
+		it("transitions to rendered on image load", () => {
+			const target = document.createElement("div");
+			const delivery = createDelivery(target, {
+				logger: makeLogger(),
+				sendBeacon: makeSendBeacon(),
+			});
+			delivery.use(banner());
+			delivery.deliver(imageAdInput(false));
+
+			expect(delivery.state).toBe("rendering");
+			const img = target.querySelector("img")!;
+			img.onload!(new Event("load"));
+			expect(delivery.state).toBe("rendered");
+		});
+
+		it("transitions to error on image load failure", () => {
+			const target = document.createElement("div");
+			const delivery = createDelivery(target, {
+				logger: makeLogger(),
+				sendBeacon: makeSendBeacon(),
+			});
+			delivery.use(banner());
+			const errorHandler = vi.fn();
+			delivery.on("error", errorHandler);
+			delivery.deliver(imageAdInput(false));
+
+			const img = target.querySelector("img")!;
+			img.onerror!(new Event("error"));
+
+			expect(delivery.state).toBe("error");
+			expect(errorHandler.mock.calls[0]![0]).toMatchObject({
+				message: "image load failed",
+				source: "banner",
+			});
+		});
+
+		it("transitions to error when neither adm nor banner.img is present", () => {
+			const target = document.createElement("div");
+			const delivery = createDelivery(target, {
+				logger: makeLogger(),
+				sendBeacon: makeSendBeacon(),
+			});
+			delivery.use(banner());
+			delivery.deliver({ ad: { id: "x", display: { banner: { img: "" } } } });
+
+			expect(delivery.state).toBe("error");
+		});
+	});
 });

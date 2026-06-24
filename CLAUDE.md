@@ -9,9 +9,8 @@ Completely independent from trawl (collection). Zero dependencies between them.
 adelv/
 ├── packages/
 │   ├── adelv/          ← @adelv/adelv (delivery core, environment-agnostic)
-│   ├── web/            ← @adelv/web (web plugins: banner, viewability, click)
+│   ├── web/            ← @adelv/web (web plugins: banner, native, video, audio, viewability, click, jsTracker)
 │   └── gpt/            ← @adelv/gpt (GPT plugin)
-├── instructions/        ← Phase-based implementation specs
 ├── package.json         ← Root (pnpm workspace)
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
@@ -55,7 +54,9 @@ Core (@adelv/adelv) does not depend on iab-openrtb. Transaction Layer type conta
 - Click trackers are obtained from LinkAsset.trkr[], not event[] (AdCOM EventType has no CLICK value)
 - Tracking beacon failures do not affect state transitions
 - Cleanup functions are synchronous only
-- Only EventTrackingMethod.IMAGE_PIXEL is supported. JAVASCRIPT tracker is a future web-specific extension
+- Core fires `EventTrackingMethod.IMAGE_PIXEL` trackers as beacons. `JAVASCRIPT` trackers are handled in `@adelv/web` via the `jsTracker()` plugin (script injection)
+- `viewable` carries a `ViewableStandard` (`mrc50` | `mrc100` | `video50`). Core maps it to the AdCOM `EventType` and deduplicates per standard. The web `viewability()` plugin measures the requested standards
+- Video/Audio rendering (`ad.video` / `ad.audio`, VAST/DAAST `adm`) is delegated to a user render function via `video()` / `audio()`. These have no `event[]`; their tracking lives inside the VAST/DAAST document
 
 ## Type Sourcing
 
@@ -76,6 +77,7 @@ idle → pending → rendering → rendered → destroyed
 ```
 
 - viewable and clicked are events, not states
+- `viewable` carries `{ ts, standard }`; deduplicated per standard in the delivery domain layer (the event bus is generic)
 - Invalid transitions are logged via logger.warn and ignored
 - setState to the same state is a no-op
 
@@ -84,9 +86,11 @@ idle → pending → rendering → rendered → destroyed
 | Timing | Fires |
 |---|---|
 | pending transition | purl |
-| rendered transition | burl + IMPRESSION equivalent from event[] + auto-emit impression event |
-| viewable event | VIEWABLE_MRC_50 equivalent from event[] (deduplicated, fires once only) |
+| rendered transition | burl + LOADED + IMPRESSION equivalents from event[] + auto-emit impression event |
+| viewable event | EventType for the met standard (`mrc50`→VIEWABLE_MRC_50, `mrc100`→VIEWABLE_MRC_100, `video50`→VIEWABLE_VIDEO_50) from event[], deduplicated per standard |
 | click event | LinkAsset.trkr[] (no guard, multiple fires OK) |
+
+`IMAGE_PIXEL` trackers fire as beacons (core). `JAVASCRIPT` trackers fire as injected `<script>` tags via `@adelv/web`'s `jsTracker()`.
 
 ## Release
 

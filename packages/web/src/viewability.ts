@@ -1,37 +1,69 @@
-import type { DeliveryPlugin } from "@adelv/adelv";
+import type { DeliveryPlugin, ViewableStandard } from "@adelv/adelv";
+
+/** Intersection ratio + continuous-visibility duration (ms) defining each MRC standard. */
+const STANDARD_CRITERIA: Record<
+	ViewableStandard,
+	{ ratio: number; duration: number }
+> = {
+	mrc50: { ratio: 0.5, duration: 1000 },
+	mrc100: { ratio: 1.0, duration: 1000 },
+	video50: { ratio: 0.5, duration: 2000 },
+};
 
 /**
  * MRC viewability measurement plugin using IntersectionObserver.
  *
- * Starts observing after `rendered`. Emits `viewable` when the target is
- * at least `threshold` visible for `duration` milliseconds continuously.
+ * Starts observing after `rendered`. For each requested `standard`, emits a
+ * `viewable` event (carrying that standard) once the target stays at least
+ * the standard's pixel ratio visible for its continuous duration.
  *
- * @param opts.threshold - Intersection ratio required. Default: `0.5` (50%).
- * @param opts.duration - Continuous visibility time in ms. Default: `1000` (MRC standard).
+ * Standards (per AdCOM `EventType`):
+ * - `mrc50` — 50% for 1s continuous (default).
+ * - `mrc100` — 100% for 1s continuous.
+ * - `video50` — 50% for 2s continuous.
+ *
+ * @param opts.standards - Standards to measure. Default: `["mrc50"]`.
  * @returns A `DeliveryPlugin<HTMLElement>` for viewability measurement.
  */
 export function viewability(opts?: {
-	threshold?: number;
-	duration?: number;
+	standards?: ViewableStandard[];
 }): DeliveryPlugin<HTMLElement> {
-	const threshold = opts?.threshold ?? 0.5;
-	const duration = opts?.duration ?? 1000;
+	const standards = opts?.standards ?? ["mrc50"];
+	// Concrete entries (avoids index-by-key access under noUncheckedIndexedAccess).
+	const criteria = (
+		Object.entries(STANDARD_CRITERIA) as [
+			ViewableStandard,
+			{ ratio: number; duration: number },
+		][]
+	).filter(([s]) => standards.includes(s));
 
 	return {
 		name: "viewability",
 		setup(delivery, signal) {
 			let observer: IntersectionObserver | null = null;
-			let timerId: ReturnType<typeof setTimeout> | null = null;
+			const timers = new Map<ViewableStandard, ReturnType<typeof setTimeout>>();
+			const pending = new Set<ViewableStandard>(standards);
 
-			function clearTimer() {
-				if (timerId !== null) {
-					clearTimeout(timerId);
-					timerId = null;
+			function clearTimer(standard: ViewableStandard) {
+				const id = timers.get(standard);
+				if (id !== undefined) {
+					clearTimeout(id);
+					timers.delete(standard);
 				}
+			}
+
+			function clearAllTimers() {
+				for (const id of timers.values()) clearTimeout(id);
+				timers.clear();
 			}
 
 			delivery.on("statechange", ({ to }) => {
 				if (to !== "rendered") return;
+				if (pending.size === 0) return;
+
+				// One observer with every distinct ratio; each callback re-evaluates
+				// all pending standards against the current intersection ratio.
+				const thresholds = [...new Set(criteria.map(([, c]) => c.ratio))];
 
 				observer = new IntersectionObserver(
 					(entries) => {
@@ -43,26 +75,36 @@ export function viewability(opts?: {
 						const entry = entries[0];
 						if (!entry) return;
 
-						if (entry.isIntersecting) {
-							if (timerId === null) {
-								timerId = setTimeout(() => {
-									timerId = null;
-									delivery.emit("viewable", { ts: Date.now() });
-									observer?.disconnect();
-								}, duration);
+						for (const [standard, { ratio, duration }] of criteria) {
+							if (!pending.has(standard)) continue;
+							const meets =
+								entry.isIntersecting && entry.intersectionRatio >= ratio;
+
+							if (meets) {
+								if (!timers.has(standard)) {
+									timers.set(
+										standard,
+										setTimeout(() => {
+											timers.delete(standard);
+											pending.delete(standard);
+											delivery.emit("viewable", { ts: Date.now(), standard });
+											if (pending.size === 0) observer?.disconnect();
+										}, duration),
+									);
+								}
+							} else {
+								clearTimer(standard);
 							}
-						} else {
-							clearTimer();
 						}
 					},
-					{ threshold },
+					{ threshold: thresholds },
 				);
 
 				observer.observe(delivery.target);
 			});
 
 			return () => {
-				clearTimer();
+				clearAllTimers();
 				observer?.disconnect();
 			};
 		},

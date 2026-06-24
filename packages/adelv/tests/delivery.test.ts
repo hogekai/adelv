@@ -434,7 +434,7 @@ describe("createDelivery", () => {
 	});
 
 	describe("viewable dedup (integration)", () => {
-		it("viewable handler fires only once", () => {
+		it("the same standard fires the handler only once", () => {
 			const delivery = createDelivery("target", { logger: makeLogger() });
 			let pd: PluginDelivery<string> | undefined;
 			delivery.use({
@@ -450,10 +450,33 @@ describe("createDelivery", () => {
 
 			const handler = vi.fn();
 			delivery.on("viewable", handler);
-			pd!.emit("viewable", { ts: 1 });
-			pd!.emit("viewable", { ts: 2 });
+			pd!.emit("viewable", { ts: 1, standard: "mrc50" });
+			pd!.emit("viewable", { ts: 2, standard: "mrc50" });
 
 			expect(handler).toHaveBeenCalledOnce();
+		});
+
+		it("different standards each fire the handler once", () => {
+			const delivery = createDelivery("target", { logger: makeLogger() });
+			let pd: PluginDelivery<string> | undefined;
+			delivery.use({
+				name: "test",
+				setup(d) {
+					pd = d;
+					return undefined;
+				},
+			});
+			delivery.deliver(makeInput());
+			pd!.setState("rendering");
+			pd!.setState("rendered");
+
+			const handler = vi.fn();
+			delivery.on("viewable", handler);
+			pd!.emit("viewable", { ts: 1, standard: "mrc50" });
+			pd!.emit("viewable", { ts: 2, standard: "mrc100" });
+			pd!.emit("viewable", { ts: 3, standard: "video50" });
+
+			expect(handler).toHaveBeenCalledTimes(3);
 		});
 	});
 
@@ -501,7 +524,7 @@ describe("createDelivery", () => {
 			delivery.on("viewable", handler);
 
 			delivery.destroy();
-			pd!.emit("viewable", { ts: 1 });
+			pd!.emit("viewable", { ts: 1, standard: "mrc50" });
 
 			expect(handler).not.toHaveBeenCalled();
 		});
